@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+google-genai
+google-auth
+google-auth-oauthlib
+playwright
+beautifulsoup4
+httpx
+python-dotenv
+pydantic-settings
+chromadb
+sentence-transformers
+pandas
+tqdm
+aiosqlite
+tldextract

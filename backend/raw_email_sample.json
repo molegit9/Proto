@@ -1,0 +1,245 @@
+{
+  "id": "19de7763e0638b77",
+  "threadId": "19de7763e0638b77",
+  "labelIds": [
+    "IMPORTANT",
+    "CATEGORY_PERSONAL",
+    "INBOX"
+  ],
+  "snippet": "가나다라마바사아자차카타파하 https://namu.wiki/w/%EC%A0%84%EA%B8%B0%ED%86%B5%EC%8B%A0%EA%B8%88%EC%9C%B5%EC%82%AC%EA%B8%B0 abcdefght 링크 버튼 문구",
+  "payload": {
+    "partId": "",
+    "mimeType": "multipart/mixed",
+    "filename": "",
+    "headers": [
+      {
+        "name": "Delivered-To",
+        "value": "ujin3209@gmail.com"
+      },
+      {
+        "name": "Received",
+        "value": "by 2002:ac0:ea52:0:b0:3b9:5cc0:20f5 with SMTP id l18csp588058imu;        Fri, 1 May 2026 23:53:00 -0700 (PDT)"
+      },
+      {
+        "name": "X-Received",
+        "value": "by 2002:a17:902:9a85:b0:2b9:8f98:3ccc with SMTP id d9443c01a7336-2b9f281256emr7234485ad.8.1777704779457;        Fri, 01 May 2026 23:52:59 -0700 (PDT)"
+      },
+      {
+        "name": "ARC-Seal",
+        "value": "i=1; a=rsa-sha256; t=1777704779; cv=none;        d=google.com; s=arc-20240605;        b=HiHc5z/0Gtsuvl4DVXl3FIyCKvEXdfVJQk59Fsg0n18ZlUjmPr/E5AZWJFMuU/cw3f         ZuSO9ZsAUUDKfvqXm5taH9gwAkSY57k2GncmJCO0khn57dNAK0tEaS7zyk4/4ORi3yVA         qeJN5B+tSAGIoIhubhUZvmtx6G9up8Vx9Kta5lzN0h3G5utbV4L6KQVKEi5rzAg/m96v         L+T0trsOfUWKzKvSk6ODHWxGdT7r1GxbJMg+l+ZPOd60nioBNb0M6qDowx5vHg6hsOET         NThE94Q3D+StVxL1lPUg+q/wDqAObO9iVzQ58erDvhHtVJK1IJNymCBXw4DBw2QghXdr         SSvw=="
+      },
+      {
+        "name": "ARC-Message-Signature",
+        "value": "i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;        h=subject:to:importance:from:date:message-id:mime-version         :dkim-signature;        bh=3oQBc3tDYSRAadBkzSCSrGp8EznQoU852nl7YJgTjmA=;        fh=XconbeYlDvLan19TK5WxqN8PMoTRHL/USFpw9cvPlDE=;        b=Co/1l7svIkhJndrl5AdfKiub1BFTUN7FDp7QfZH8wgPcH8m8SJzgtgQbiY6BFUEACC         m7HORukXhykivqgi1TVlNAkXKGPt7p+eGwMbfHJWj6wmbRMMhKPbzkuodd+JgPEObso6         SnyfEDBWhV0Ne27F+PvA1J43oVH/OtdfteZxgoLFB/Ql2ulyJPuf87CeKWQIzCgqmMkm         wZQIXAYsRHhTI0765UBcTcEjowa+kIZ3MbMj2JHrLiuT4avQjlhMr0WXQ1Ra6Sd4TShJ         HNCnu5/YpLe30/MfQjY+8yFEsi0U56ABeaLdxlUMDP1CvkH3jXHGUkYjp74zUuKsPAS0         eF8g==;        dara=google.com"
+      },
+      {
+        "name": "ARC-Authentication-Results",
+        "value": "i=1; mx.google.com;       dkim=pass header.i=@naver.com header.s=s20171208 header.b=LRIKh4bV;       spf=pass (google.com: domain of jangfish0925@naver.com designates 61.247.196.233 as permitted sender) smtp.mailfrom=jangfish0925@naver.com;       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=naver.com"
+      },
+      {
+        "name": "Return-Path",
+        "value": "<jangfish0925@naver.com>"
+      },
+      {
+        "name": "Received",
+        "value": "from mvsmtppost22.nm.naver.com (mvsmtppost22.nm.naver.com. [61.247.196.233])        by mx.google.com with ESMTPS id d9443c01a7336-2b9cae66556si90045045ad.95.2026.05.01.23.52.56        for <ujin3209@gmail.com>        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);        Fri, 01 May 2026 23:52:59 -0700 (PDT)"
+      },
+      {
+        "name": "Received-SPF",
+        "value": "pass (google.com: domain of jangfish0925@naver.com designates 61.247.196.233 as permitted sender) client-ip=61.247.196.233;"
+      },
+      {
+        "name": "Authentication-Results",
+        "value": "mx.google.com;       dkim=pass header.i=@naver.com header.s=s20171208 header.b=LRIKh4bV;       spf=pass (google.com: domain of jangfish0925@naver.com designates 61.247.196.233 as permitted sender) smtp.mailfrom=jangfish0925@naver.com;       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=naver.com"
+      },
+      {
+        "name": "X-Originating-IP",
+        "value": "211.185.148.87"
+      },
+      {
+        "name": "X-Works-Smtp-Source",
+        "value": "ArKXFobXFqJCpNm9FqKZWHF0"
+      },
+      {
+        "name": "Received",
+        "value": "from cvsendbo018.nm ([10.112.20.46])  by mvsmtppost22.nm.naver.com with ESMTP id +IzLdH-fTCSpwNylLIFn3Q  for <ujin3209@gmail.com>;  Sat, 02 May 2026 06:52:55 -0000"
+      },
+      {
+        "name": "DKIM-Signature",
+        "value": "v=1; a=rsa-sha256; c=relaxed/simple; d=naver.com; s=s20171208; t=1777704775; bh=HFzbo29kUb1qdF3kRtLul8h2esCB/f/ywHUNdEUz/VE=; h=Message-ID:Date:From:To:Subject:From:Subject:Feedback-ID:\t X-Works-Security; b=LRIKh4bVgGbaWmzW9CztYpeEw3aqQg1rrv5tTZ+yV6lr8ZNNOKkdHpQWoIvJjBKfO\t RlgSya0sZ5JvfZm3jqDSxTxi2+JS2RYATFwUF1fc29HYT5Ugru/kl9H+vZanxihSO4\t Cfb60Zf5ibWROhocpjy+fUwga3qtOKxbLaFbIhlFp3XOSIZhcHWY7wo5XqUm63y1N7\t lbQXb1SVjOehV9Btg9nwcVTfnkRQBNUjhg9JDYTp9WpFeVXjhk9k/GM5f1T7lpsoR5\t e3KV+zT0MO9YF/eX8XkN81F6k8Y6siyTShkMpotdzjnUYvB+x1f2EJi5jmq1IUpJpT\t G1j06GIYYCCiQ=="
+      },
+      {
+        "name": "X-Session-ID",
+        "value": "c9d26147ffcc19bbc3b63bbc5e46d6eb89ecdf2080113a6d350e2d8a5cfbe0cf"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<928bdec24edd6195c87fc5c3f0c18166@cweb008.nm>"
+      },
+      {
+        "name": "Date",
+        "value": "Sat, 02 May 2026 15:52:55 +0900"
+      },
+      {
+        "name": "From",
+        "value": "\"김우진\" <jangfish0925@naver.com>"
+      },
+      {
+        "name": "Importance",
+        "value": "normal"
+      },
+      {
+        "name": "To",
+        "value": "<ujin3209@gmail.com>"
+      },
+      {
+        "name": "Subject",
+        "value": "테스트용"
+      },
+      {
+        "name": "X-Originating-IP",
+        "value": "211.185.148.87"
+      },
+      {
+        "name": "X-Works-Send-Opt",
+        "value": "3rKwjAIYjHm/KA2mFqJYKAK9aBwLBd9YKBmm"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/mixed; boundary=\"-----Boundary-WM=_7fd2f6bfb700.1777704775580\""
+      }
+    ],
+    "body": {
+      "size": 0
+    },
+    "parts": [
+      {
+        "partId": "0",
+        "mimeType": "multipart/alternative",
+        "filename": "",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "multipart/alternative; boundary=\"-----Boundary-WM=_7fd2f6bfb700.1777704775581\""
+          }
+        ],
+        "body": {
+          "size": 0
+        },
+        "parts": [
+          {
+            "partId": "0.0",
+            "mimeType": "text/plain",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain; charset=\"utf-8\""
+              },
+              {
+                "name": "Content-Transfer-Encoding",
+                "value": "base64"
+              }
+            ],
+            "body": {
+              "size": 174,
+              "data": "6rCA64KY64uk652866eI67CU7IKs7JWE7J6Q7LCo7Lm07YOA7YyM7ZWYCgpodHRwczovL25hbXUud2lraS93LyVFQyVBMCU4NCVFQSVCOCVCMCVFRCU4NiVCNSVFQyU4QiVBMCVFQSVCOCU4OCVFQyU5QyVCNSVFQyU4MiVBQyVFQSVCOCVCMAoKCmFiY2RlZmdodAoK66eB7YGsCgoKCuuyhO2KvCDrrLjqtawK"
+            }
+          },
+          {
+            "partId": "0.1",
+            "mimeType": "multipart/related",
+            "filename": "",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "multipart/related; boundary=\"-----Boundary-WM=_7fd2f6bfb700.1777704775582\""
+              }
+            ],
+            "body": {
+              "size": 0
+            },
+            "parts": [
+              {
+                "partId": "0.1.0",
+                "mimeType": "text/html",
+                "filename": "",
+                "headers": [
+                  {
+                    "name": "Content-Type",
+                    "value": "text/html; charset=\"utf-8\""
+                  },
+                  {
+                    "name": "Content-Transfer-Encoding",
+                    "value": "base64"
+                  }
+                ],
+                "body": {
+                  "size": 1196,
+                  "data": "PGh0bWw-PGhlYWQ-PHN0eWxlPnB7bWFyZ2luLXRvcDowcHg7bWFyZ2luLWJvdHRvbTowcHg7fTwvc3R5bGU-PC9oZWFkPjxib2R5PjxkaXYgc3R5bGU9ImZvbnQtc2l6ZToxNHB4OyBmb250LWZhbWlseTpHdWxpbSzqtbTrprwsc2Fucy1zZXJpZjsiPuqwgOuCmOuLpOudvOuniOuwlOyCrOyVhOyekOywqOy5tO2DgO2MjO2VmDxicj48YnI-PGRpdj48YSBocmVmPSJodHRwczovL25hbXUud2lraS93LyVFQyVBMCU4NCVFQSVCOCVCMCVFRCU4NiVCNSVFQyU4QiVBMCVFQSVCOCU4OCVFQyU5QyVCNSVFQyU4MiVBQyVFQSVCOCVCMCIgdGFyZ2V0PSJfYmxhbmsiIHJlbD0ibm9vcGVuZXIgbm9yZWZlcnJlciI-aHR0cHM6Ly9uYW11Lndpa2kvdy8lRUMlQTAlODQlRUElQjglQjAlRUQlODYlQjUlRUMlOEIlQTAlRUElQjglODglRUMlOUMlQjUlRUMlODIlQUMlRUElQjglQjA8L2E-PGJyPjwvZGl2PjxkaXY-PGJyPjwvZGl2PjxkaXY-PGltZyBjbGFzcz0iTkFWRVJfTUFJTF9JTUFHRSIgc3JjPSJjaWQ6YzViZWE1YzQ2Njk0MzYxNTE0OWJlZTlmM2M1MzdkNmRAY3dlYjAwMy5ubSI-PGJyPjxzcGFuIHN0eWxlPSJmb250LXdlaWdodDpib2xkIj5hYmNkZWZnaHQ8L3NwYW4-PC9kaXY-PGRpdj48YnI-PC9kaXY-PGRpdj48YSBocmVmPSJodHRwczovL21vbGU5LnRpc3RvcnkuY29tLyIgdGFyZ2V0PSJfYmxhbmsiPuunge2BrDwvYT48YnI-PC9kaXY-PGRpdj48YnI-PC9kaXY-PGRpdj48YnI-PC9kaXY-PGRpdj48YnI-PC9kaXY-CjxhIGhyZWY9Imh0dHBzOi8vbWFpbC5nb29nbGUuY29tIiBzdHlsZT0iYmFja2dyb3VuZC1jb2xvcjojNENBRjUwO2NvbG9yOndoaXRlO3BhZGRpbmc6MTBweCAyMHB4O3RleHQtZGVjb3JhdGlvbjpub25lO2JvcmRlci1yYWRpdXM6NXB4O2Rpc3BsYXk6aW5saW5lLWJsb2NrIj7rsoTtirwg66y46rWsPC9hPgoKCjwvZGl2PjwvYm9keT48L2h0bWw-PHRhYmxlIHN0eWxlPSdkaXNwbGF5Om5vbmUnPjx0cj48dGQ-PGltZyBzcmM9Imh0dHBzOi8vbWFpbC5uYXZlci5jb20vcmVhZFJlY2VpcHQvbm90aWZ5Lz9pbWc9VDlSR3A0JTJCNU02Y3NGeFVsS3pDcWhBdlpheml2cDZLWkZ6a3ZwQU13YXhrb2FBJTJCNE1xa29Lck1tTXF1JTJGS3hNcnR6RlhwNlVtS0EyNVc0ZFFhWGs4MTYlMkZxS29nbHR6JTJCUk02MG43NEZUV3QlM0QlM0QuZ2lmIiBib3JkZXI9IjAiLz48L3RkPjwvdHI-PC90YWJsZT4="
+                }
+              },
+              {
+                "partId": "0.1.1",
+                "mimeType": "image/png",
+                "filename": "1777704504332.png",
+                "headers": [
+                  {
+                    "name": "Content-Type",
+                    "value": "image/png; name=\"1777704504332.png\""
+                  },
+                  {
+                    "name": "Content-Disposition",
+                    "value": "inline; filename=\"1777704504332.png\""
+                  },
+                  {
+                    "name": "Content-ID",
+                    "value": "<c5bea5c466943615149bee9f3c537d6d@cweb003.nm>"
+                  },
+                  {
+                    "name": "Content-Transfer-Encoding",
+                    "value": "base64"
+                  }
+                ],
+                "body": {
+                  "attachmentId": "ANGjdJ9BHWuYzA2YFEzG4Yv9iMvNamu3RzM31hGh9zhkv939ro_9E_Tnwle4FIJ5t-FDUybNGeE_jIyLaf7D_0vfyg_O_x-P4inIvmKW6u6aDTEIjAwgo0ZmEyoBT8-601STokGH29r1KrVxl2gWMr5LbhIzSMCWeW5x3swxAv-sN8jHLfq7XfFRVwdwCQJQxCN6UqTSmkKoJYny_-uP0wmdUW19Xqe5vETeFmS6dh7Sk4ZXcUWXsIP_wm_AIAuuWI0P0Wb-cHRR0mG4pqmoraMoK6gbgB4aXFB9ReJ-NvlOpOi_gRHBJmKu96CSRs7lT58D76xC3hcBSb_WU4kDE_UfwMQ9xrcILY_J3VlP96pLCCzBPW-mMb0PTxTREAEo86TLPDRUISn86yAMvb_2",
+                  "size": 269141
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "partId": "1",
+        "mimeType": "application/pdf",
+        "filename": "llm으로피싱이메일잡기.pdf",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/pdf; name=\"llm으로피싱이메일잡기.pdf\""
+          },
+          {
+            "name": "Content-Disposition",
+            "value": "attachment; filename=\"llm으로피싱이메일잡기.pdf\""
+          },
+          {
+            "name": "Content-Transfer-Encoding",
+            "value": "base64"
+          }
+        ],
+        "body": {
+          "attachmentId": "ANGjdJ8Wn9SKbkC_9hnFUsDjrVZhXZU9Z7ucpIIZa9Hn0CfHFEPM65PND0AlGSjBazSWsieZsKkpwx25RO_E3ly9kXEKRVETjl_JX6TyYy2phnwAyPQ05tnEeAuTOorO_ajWDxaOA2iGXfu8ft1h--Z-XwyryPqDI3RXV5rxOuipeVaD9EPg-KNqskpZsp0ln6m_O43wfFwASYU6N4Us7NPf8PEI5CyUSTsIPf_Aw9Bmu4ATGlIYtJqBL-NBDNvaiA0vs3PvlyAQ7cu_bsV4Li8JhiCviIE7c56Db8RM7CA_sR54tOBVDUEaz0sNw7Is5IVby9n8zKg-2-P6U9Z6NT414kP_8QkXYP9v0cQJOA3-vGN1kL0U2IhM9UuQPA-neRHC5x5e5AixwY6ATq9FkEU10mFe4RMXIY_TvdtAHw",
+          "size": 444290
+        }
+      }
+    ]
+  },
+  "sizeEstimate": 983590,
+  "historyId": "992102",
+  "internalDate": "1777704775000"
+}

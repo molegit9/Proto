@@ -1,0 +1,235 @@
+#phishing-assistant-banner {
+  margin: 12px 20px;
+  border-radius: 8px;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  z-index: 9999;
+  position: relative;
+}
+
+.banner-content {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 6px solid #ccc;
+  background-color: #f9f9f9;
+}
+
+.banner-content.risk-low {
+  border-left-color: #34A853; /* Google Green */
+  background-color: #e8f5e9;
+}
+
+.banner-content.risk-medium {
+  border-left-color: #FBBC05; /* Google Yellow */
+  background-color: #fff8e1;
+}
+
+.banner-content.risk-high {
+  border-left-color: #EA4335; /* Google Red */
+  background-color: #fce8e6;
+}
+
+.banner-header {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.banner-summary {
+  font-size: 14px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.banner-soc-eng {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: #555;
+  background: rgba(0,0,0,0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.banner-reason {
+  font-size: 14px;
+  color: #333;
+}
+
+.banner-actions {
+  font-size: 14px;
+}
+
+.banner-actions ul {
+  margin: 4px 0 0;
+  padding-left: 24px;
+}
+
+.banner-actions li {
+  margin-bottom: 4px;
+}
+
+/* 토글 스타일 */
+.collapsible-section {
+  margin-top: 12px;
+  border-top: 1px dashed rgba(0,0,0,0.1);
+  padding-top: 12px;
+}
+
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.collapsible-header strong {
+  color: #333;
+}
+
+.toggle-icon::after {
+  content: '▲';
+  font-size: 12px;
+  color: #666;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.collapsible-section.collapsed .toggle-icon::after {
+  content: '▼';
+}
+
+.collapsible-content {
+  margin-top: 8px;
+  max-height: 500px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin-top 0.3s ease-out;
+  opacity: 1;
+}
+
+.collapsible-section.collapsed .collapsible-content {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+/* 메일 요약 섹션 */
+.banner-mail-summary {
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.summary-header {
+  font-size: 14px;
+}
+
+.summary-copy-btn {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.summary-copy-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.summary-body {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* 토스트 알림 */
+.phishing-assistant-toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #333;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 10000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.phishing-assistant-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 메인 배너 토글 스타일 */
+.collapsible-main.collapsed .main-content {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin-top: 0 !important;
+}
+
+.collapsible-main.collapsed .main-header .toggle-icon::after {
+  content: '▼';
+}
+
+/* ── RAG Done Criteria 뱃지 ─────────────────────────────────────── */
+.rag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  cursor: default;
+}
+
+.rag-badge.rag-active {
+  background: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #a8c5fa;
+}
+
+.rag-badge.rag-inactive {
+  background: #f1f3f4;
+  color: #80868b;
+  border: 1px solid #dadce0;
+}
+
+/* RAG 판례 목록 */
+.banner-rag-docs .collapsible-content {
+  max-height: 600px;
+}
+
+.rag-doc-item {
+  background: rgba(26, 115, 232, 0.05);
+  border: 1px solid rgba(26, 115, 232, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.rag-doc-meta {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a73e8;
+  margin-bottom: 4px;
+}
+
+.rag-doc-snippet {
+  font-size: 12px;
+  color: #444;
+  line-height: 1.45;
+  word-break: break-all;
+}

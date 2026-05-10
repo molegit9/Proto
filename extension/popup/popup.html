@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="tabs">
+        <button class="tab-btn active" data-target="tab-settings">설정</button>
+        <button class="tab-btn" data-target="tab-history">기록</button>
+    </div>
+
+    <!-- Tab 1: 설정 -->
+    <div id="tab-settings" class="tab-content active">
+        <div class="icon">🗄️</div>
+        <h3>보안 캐시 DB 초기화</h3>
+        <p>백엔드 로컬에 저장된 모든 호버링 추론 캐시 및 분석 로그 데이터(SQLite)를 강제로 삭제하여 초기화합니다.</p>
+        
+        <div class="toggle-container">
+            <span class="toggle-label" style="display: flex; flex-direction: column;">
+                진행사항 툴팁 실시간 표시
+            </span>
+            <label class="switch">
+                <input type="checkbox" id="progressToggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="toggle-container">
+            <span class="toggle-label" style="display: flex; flex-direction: column;">
+                정밀 분석 모드 (일반 웹 Hover)
+                <span style="font-size: 10px; color: #ef4444; font-weight: normal; margin-top: 2px;">⚠️ 2-Tier 동적 검사 수행 (약 3~7초 지연)</span>
+            </span>
+            <label class="switch">
+                <input type="checkbox" id="deepScanToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <button id="clearBtn" class="action-btn">데이터베이스(DB) 초기화</button>
+        <div id="statusMsg" class="success">초기화 완료! ✔️</div>
+    </div>
+
+    <!-- Tab 2: 기록 -->
+    <div id="tab-history" class="tab-content">
+        <h3>최근 분석 기록</h3>
+        <div id="logs-container">
+            <div id="logs-loading">기록을 불러오는 중...</div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

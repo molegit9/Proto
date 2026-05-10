@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "SecurityGuard",
+  "version": "1.0",
+  "permissions": [
+    "identity",
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*",
+    "http://localhost:8000/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "content/dom_utils.js",
+        "content/api.js",
+        "content/gmail_banner.js",
+        "content/gmail_ui.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/banner.css"
+      ]
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "exclude_matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "content/url_ui.js",
+        "content/content.js"
+      ],
+      "css": [
+        "content/tooltip.css"
+      ]
+    }
+  ],
+  "oauth2": {
+    "client_id": "1047744723448-cegehsu76l9imv59335b4f3s02qnirqu.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.readonly"
+    ]
+  }
+}

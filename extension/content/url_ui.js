@@ -1,0 +1,301 @@
+function initUrlAnalysis() {
+  // 보호 대상 탑티어 도메인들
+  const topBrands = ["apple.com", "naver.com", "google.com", "amazon.com", "github.com", "facebook.com", "netflix.com"];
+
+  // 진행사항 툴팁 표시 여부 상태 관리 및 심층 스캔 모드
+  let showProgress = true;
+  let enableDeepScan = false;
+  
+  if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.local.get(['showProgress', 'enableDeepScan'], (result) => {
+          if (result.showProgress !== undefined) showProgress = result.showProgress;
+          if (result.enableDeepScan !== undefined) enableDeepScan = result.enableDeepScan;
+      });
+      chrome.storage.onChanged.addListener((changes) => {
+          if (changes.showProgress) showProgress = changes.showProgress.newValue;
+          if (changes.enableDeepScan) enableDeepScan = changes.enableDeepScan.newValue;
+      });
+  }
+
+
+  // Levenshtein 거리 계산 알고리즘 (0.01초 소요)
+  function calculateDistance(a, b) {
+      if (!a) return b ? b.length : 0;
+      if (!b) return a.length;
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+              if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                  matrix[i][j] = matrix[i - 1][j - 1];
+              } else {
+                  matrix[i][j] = Math.min(
+                      matrix[i - 1][j - 1] + 1, // substitution
+                      Math.min(matrix[i][j - 1] + 1, // insertion
+                              matrix[i - 1][j] + 1)); // deletion
+              }
+          }
+      }
+      return matrix[b.length][a.length];
+  }
+
+  function checkLevenshtein(domain) {
+      try {
+          const parts = domain.split('.');
+          let baseDomain = domain;
+          if (parts.length > 2) {
+              baseDomain = parts.slice(-2).join('.');
+          }
+
+          for (const brand of topBrands) {
+              if (baseDomain === brand) return { spoofed: false, brand: brand, exact_match: true }; // 완벽 일치하면 공식 도메인
+              
+              const dist = calculateDistance(baseDomain, brand);
+              // 타겟과 글자수 차이가 1~2글자이면서 불일치하면 오타 사칭(Typosquatting) 의심
+              if (dist > 0 && dist <= 2) {
+                  return { spoofed: true, brand: brand, exact_match: false };
+              }
+          }
+          return { spoofed: false, brand: null, exact_match: false };
+      } catch(err) {
+          console.error("[Phishing Detector] Levenshtein 분석 중 오류:", err);
+          return { spoofed: false, brand: null, exact_match: false };
+      }
+  }
+
+  let hoverTimer;
+  let currentTooltip = null;
+
+  function showSafetyTooltip(x, y, safetyScore, reason) {
+      console.log(`[Phishing Detector] 툴팁 표시 시도 - 점수: ${safetyScore}, 이유: ${reason}`);
+      
+      if (currentTooltip) {
+          currentTooltip.remove();
+      }
+      
+      const tooltip = document.createElement('div');
+      tooltip.className = 'phishing-detector-tooltip';
+      
+      // 안전도 스타일링 (100점 만점에 가까울수록 안전)
+      let colorClass = 'safe';
+      let label = '안전함';
+      if (safetyScore <= 40) { colorClass = 'danger'; label = '위험 (접속 금지)'; }
+      else if (safetyScore <= 70) { colorClass = 'warning'; label = '주의 요망'; }
+
+      tooltip.classList.add(colorClass);
+      
+      tooltip.innerHTML = `
+          <div class="header">Zero-shot URL 탐지기</div>
+          <div class="score">보안 점수: <strong>${safetyScore}점</strong> / 100점 (${label})</div>
+          <div class="reason">${reason}</div>
+      `;
+      
+      tooltip.style.left = `${x + 15}px`;
+      tooltip.style.top = `${y + 15}px`;
+      
+      document.body.appendChild(tooltip);
+      currentTooltip = tooltip;
+  }
+
+  // 점수 없는 진행상황 전용 툴팁 (progress 메시지용)
+  function showProgressTooltip(x, y, message) {
+      if (!currentTooltip || !currentTooltip.classList.contains('progress-tooltip')) {
+          // 처음 progress 툴팁이 뜰 때만 새로 생성
+          if (currentTooltip) currentTooltip.remove();
+          const tooltip = document.createElement('div');
+          tooltip.className = 'phishing-detector-tooltip progress-tooltip';
+          tooltip.style.left = `${x + 15}px`;
+          tooltip.style.top = `${y + 15}px`;
+          document.body.appendChild(tooltip);
+          currentTooltip = tooltip;
+      }
+      // 이미 progress 툴팁이 있다면 메시지만 업데이트 (위치 고정)
+      currentTooltip.innerHTML = `
+          <div class="header">Zero-shot URL 탐지기</div>
+          <div class="reason" style="display:flex;align-items:center;gap:6px;">
+              <span style="animation:spin 1s linear infinite;display:inline-block;">⏳</span>
+              <span>${message}</span>
+          </div>
+      `;
+  }
+
+  function removeTooltip() {
+      if (currentTooltip) {
+          currentTooltip.remove();
+          currentTooltip = null;
+      }
+  }
+
+  document.addEventListener('mouseover', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return; // 하이퍼링크가 아니면 무시
+
+      const url = link.href;
+      
+      // 브라우저 내부 링크, 자바스크립트 등 비정상 링크는 스킵
+      if (!url.startsWith('http')) return; 
+
+      console.log(`[Phishing Detector] 링크 호버 감지됨: ${url}`);
+
+      // 0.5초간 마우스가 머물면 의도(Hover)로 파악하고 즉시 검사 시작
+      hoverTimer = setTimeout(async () => {
+          try {
+              const domain = new URL(url).hostname;
+              console.log(`[Phishing Detector] 호버 시간 유지! 서버 검사 요청 시작... (도메인: ${domain})`);
+              
+              // 1. 순식간에 끝나는 로컬 연산
+              const brandData = checkLevenshtein(domain);
+              console.log(`[Phishing Detector] 로컬 사칭 탐지 결과:`, brandData);
+              
+              // 2. 백엔드(FastAPI)로 검사 요청 (Gemini + RDAP 병렬)
+              console.log(`[Phishing Detector] 서버 API 호출 중... (localhost:8000)`);
+              const response = await fetch('http://localhost:8000/api/v1/analyze', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({
+                      url: url,
+                      is_spoofed: brandData.spoofed,
+                      target_brand: brandData.brand,
+                      is_exact_match: brandData.exact_match,
+                      enable_deep_scan: enableDeepScan
+                  })
+              });
+              
+              console.log(`[Phishing Detector] HTTP 서버 응답 상태: ${response.status}`);
+              
+              if (!response.ok) {
+                  throw new Error(`서버 에러 상태코드: ${response.status}`);
+              }
+
+              const reader = response.body.getReader();
+              const decoder = new TextDecoder();
+              let buffer = '';
+
+              while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  
+                  buffer += decoder.decode(value, { stream: true });
+                  const parts = buffer.split('\n');
+                  buffer = parts.pop(); // 마지막 불완전한 조각 저장
+
+                  for (const part of parts) {
+                      if (!part.trim()) continue;
+                      try {
+                          const result = JSON.parse(part);
+                          
+                          if (result.progress) {
+                              if (showProgress) {
+                                  showProgressTooltip(e.pageX, e.pageY, result.progress);
+                              }
+                          } else if (result.status === 'success') {
+                              const data = JSON.parse(result.data);
+                              showSafetyTooltip(e.pageX, e.pageY, data.safety_score, data.reason);
+                          } else if (result.status === 'error') {
+                              console.error("[Phishing Detector] 백엔드 분석 실패 원인:", result.message);
+                              showSafetyTooltip(e.pageX, e.pageY, 50, `분석 실패: ${result.message}`);
+                          }
+                      } catch (parseError) {
+                          console.error("NDJSON 파싱 에러:", parseError, part);
+                      }
+                  }
+              }
+          } catch (err) {
+              console.error('[Phishing Detector] API 연결 또는 파싱 에러 (서버 켜져있나요?)', err);
+              showSafetyTooltip(e.pageX, e.pageY, 50, "서버와 통신할 수 없습니다. 서버가 켜져있는지 확인해주세요.");
+          }
+      }, 500); 
+  });
+
+  document.addEventListener('mouseout', (e) => {
+      const link = e.target.closest('a');
+      if (!link) return;
+      
+      clearTimeout(hoverTimer);
+      // 호버에서 마우스가 빠졌을 때, 드래그 상태가 아니면 툴팁을 지운다.
+      const selectedText = window.getSelection().toString().trim();
+      if (selectedText.length === 0) removeTooltip();
+  });
+
+  // 화면의 빈 공간을 클릭하면 툴팁 닫기
+  document.addEventListener('mousedown', (e) => {
+      // 툴팁 위를 클릭한게 아닐 경우
+      if (!e.target.closest('.phishing-detector-tooltip')) {
+          setTimeout(() => {
+              const selectedText = window.getSelection().toString().trim();
+              if (selectedText.length === 0) removeTooltip();
+          }, 10);
+      }
+  });
+
+  // 드래그(텍스트 선택) 감지 로직
+  document.addEventListener('mouseup', async (e) => {
+      if (e.target.closest('.phishing-detector-tooltip')) return;
+      
+      const selectedText = window.getSelection().toString().trim();
+      
+      // 10자 이상, 500자 이하의 텍스트를 드래그 했을 때만 의도로 파악하고 작동
+      if (selectedText.length >= 10 && selectedText.length <= 500) {
+          console.log(`[Phishing Detector] 텍스트 드래그 감지됨: "${selectedText}"`);
+          
+          try {
+              // 임시 툴팁 생성
+              if (showProgress) {
+                  showSafetyTooltip(e.pageX, e.pageY, 50, "분석 서버 연결 중... 🔄");
+                  if (currentTooltip) currentTooltip.classList.remove('safe', 'danger', 'warning');
+              }
+              
+              const response = await fetch('http://localhost:8000/api/v1/analyze/text', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({
+                      selected_text: selectedText
+                  })
+              });
+              
+              if (!response.ok) throw new Error("서버 연동 에러");
+              
+              const reader = response.body.getReader();
+              const decoder = new TextDecoder();
+              let buffer = '';
+
+              while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  
+                  buffer += decoder.decode(value, { stream: true });
+                  const parts = buffer.split('\n');
+                  buffer = parts.pop();
+
+                  for (const part of parts) {
+                      if (!part.trim()) continue;
+                      try {
+                          const result = JSON.parse(part);
+                          
+                          if (result.progress) {
+                              if (showProgress) {
+                                  showProgressTooltip(e.pageX, e.pageY, result.progress);
+                              }
+                          } else if (result && result.score !== undefined) {
+                              // UI는 100점이 '안전'이므로 점수를 뒤집어서 전달 (100 - score)
+                              const safetyScore = 100 - result.score;
+                              showSafetyTooltip(e.pageX, e.pageY, safetyScore, result.reason + "<br>🛡️ 제안: " + (result.mitigation || ""));
+                          } else if (result.risk_level === "에러" || result.risk_level === "시스템 오류") {
+                              console.error("[Phishing Detector] 드래그 분석 에러:", result);
+                              showSafetyTooltip(e.pageX, e.pageY, 50, `분석 에러: ${result.reason}`);
+                          }
+                      } catch (parseError) {
+                          console.error("NDJSON 파싱 에러:", parseError, part);
+                      }
+                  }
+              }
+          } catch (err) {
+              console.error('[Phishing Detector] 드래그 분석 API 연동 실패', err);
+              showSafetyTooltip(e.pageX, e.pageY, 50, "서버와 통신할 수 없습니다. (API 연동 실패)");
+          }
+      }
+  });
+
+  console.log("[Phishing Detector] 클라이언트 코드 로드 완료 및 감지 대기 중...");
+}
