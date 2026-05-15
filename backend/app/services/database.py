@@ -37,6 +37,8 @@ def init_db():
         for col_def in [
             "ALTER TABLE email_logs ADD COLUMN rag_used BOOLEAN DEFAULT 0",
             "ALTER TABLE email_logs ADD COLUMN rag_doc_count INTEGER DEFAULT 0",
+            "ALTER TABLE email_logs ADD COLUMN raw_data TEXT",
+            "ALTER TABLE security_logs ADD COLUMN raw_data TEXT",
         ]:
             try:
                 conn.execute(col_def)
@@ -57,12 +59,12 @@ def get_db():
         conn.commit()
         conn.close()
 
-def log_analysis(action_type: str, content: str, status: str, reason: str):
+def log_analysis(action_type: str, content: str, status: str, reason: str, raw_data: str = None):
     with get_db() as conn:
         conn.execute(
-            '''INSERT INTO security_logs (action_type, content, status, reason) 
-               VALUES (?, ?, ?, ?)''',
-            (action_type, content, status, reason)
+            '''INSERT INTO security_logs (action_type, content, status, reason, raw_data) 
+               VALUES (?, ?, ?, ?, ?)''',
+            (action_type, content, status, reason, raw_data)
         )
 
 def get_cached_analysis(content: str):
@@ -81,13 +83,14 @@ def log_email_analysis(
     message_id: str, sender: str, subject: str,
     is_phishing: bool, risk_level: str, summary: str,
     rag_used: bool = False, rag_doc_count: int = 0,
+    raw_data: str = None
 ):
     with get_db() as conn:
         conn.execute(
             '''INSERT INTO email_logs
-               (message_id, sender, subject, is_phishing, risk_level, summary, rag_used, rag_doc_count)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-            (message_id, sender, subject, is_phishing, risk_level, summary, rag_used, rag_doc_count)
+               (message_id, sender, subject, is_phishing, risk_level, summary, rag_used, rag_doc_count, raw_data)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (message_id, sender, subject, is_phishing, risk_level, summary, rag_used, rag_doc_count, raw_data)
         )
 
 def get_recent_logs(limit: int = 20) -> list[dict]:

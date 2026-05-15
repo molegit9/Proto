@@ -13,6 +13,7 @@ async def inspect_url_with_playwright(playwright: Playwright, url: str) -> dict:
         "page_title": "",
         "has_password_field": False,
         "has_form": False,
+        "has_hidden_form": False,
         "is_redirected": False,
         "error": None,
         "error_type": "unknown",
@@ -98,6 +99,12 @@ async def inspect_url_with_playwright(playwright: Playwright, url: str) -> dict:
                 # 렌더링 후 동적으로 생성된 폼 및 비밀번호 필드 존재 여부 확인
                 result["has_password_field"] = await page.locator("input[type='password']").count() > 0
                 result["has_form"] = await page.locator("form").count() > 0
+                result["has_hidden_form"] = await page.evaluate("""() => {
+                    return Array.from(document.querySelectorAll('form')).some(f => {
+                        const style = window.getComputedStyle(f);
+                        return style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0' || f.hasAttribute('hidden');
+                    });
+                }""")
                 
                 # 4. 수집 정보 추가
                 # external_links

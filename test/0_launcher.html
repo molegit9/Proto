@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>SecurityGuard 시연 런처</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #0f0f0f; color: #fff; min-height: 100vh; padding: 40px 20px; }
+
+  h1 { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 40px; }
+
+  .section { margin-bottom: 32px; }
+  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #555; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #222; }
+
+  .link-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px; transition: border-color 0.2s; }
+  .link-card:hover { border-color: #444; }
+
+  .scenario-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+  .badge-safe    { background: #1b4332; color: #4ade80; }
+  .badge-url     { background: #450a0a; color: #f87171; }
+  .badge-text    { background: #2e1065; color: #c084fc; }
+  .badge-dynamic { background: #431407; color: #fb923c; }
+
+  .link-info { flex: 1; }
+  .link-info .name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .link-info .desc { font-size: 12px; color: #666; line-height: 1.5; }
+
+  .link-url { font-size: 12px; color: #3b82f6; text-decoration: none; font-family: monospace; word-break: break-all; }
+  .link-url:hover { color: #60a5fa; text-decoration: underline; }
+
+  .hint { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 16px 20px; font-size: 12px; color: #666; line-height: 1.8; margin-bottom: 32px; }
+  .hint strong { color: #aaa; }
+
+  .arrow { color: #333; font-size: 18px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>🛡️ SecurityGuard 시연 런처</h1>
+<p class="subtitle">아래 링크에 마우스를 0.5초 올려두면 익스텐션이 분석을 시작합니다</p>
+
+<div class="hint">
+  <strong>사용 방법</strong><br>
+  1. <code>python -m http.server 3000</code> 으로 로컬 서버 실행<br>
+  2. <code>http://localhost:3000/0_launcher.html</code> 접속<br>
+  3. 각 링크에 마우스를 올려서 툴팁 확인
+</div>
+
+<div class="section">
+  <div class="section-title">시나리오별 링크</div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-safe">🟢 정상</span>
+    <div class="link-info">
+      <div class="name">SafeWeb 포털 — 정상 사이트</div>
+      <div class="desc">기준선 확인용. SAFE 판정 예상</div>
+      <a class="link-url" href="http://localhost:3000/1_normal_portal.html">
+        http://localhost:3000/1_normal_portal.html
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-url">🔴 URL탐지</span>
+    <div class="link-info">
+      <div class="name">NAVER 가짜 로그인 — 타이포스쿼팅</div>
+      <div class="desc">Levenshtein 로컬 탐지 + VT + Gemini. naver-account-secure.xyz 패턴</div>
+      <a class="link-url" href="http://localhost:3000/2_url_typosquatting.html">
+        http://localhost:3000/2_url_typosquatting.html
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-text">🟣 텍스트</span>
+    <div class="link-info">
+      <div class="name">카카오뱅크 사칭 공지 — 소셜엔지니어링</div>
+      <div class="desc">페이지 접속 후 보라색 박스 텍스트 드래그. VT 못 잡는 영역을 Gemini가 탐지</div>
+      <a class="link-url" href="http://localhost:3000/3_social_engineering_text.html">
+        http://localhost:3000/3_social_engineering_text.html
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-dynamic">🟠 동적분석</span>
+    <div class="link-info">
+      <div class="name">쿠팡 사칭 쇼핑몰 — 숨겨진 요소 탐지</div>
+      <div class="desc">정밀검사 OFF → 도메인 탐지만. 정밀검사 ON → hidden form·tracking pixel 추가 탐지</div>
+      <a class="link-url" href="http://localhost:3000/4_dynamic_analysis_target.html">
+        http://localhost:3000/4_dynamic_analysis_target.html
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+</div>
+
+<div class="section">
+  <div class="section-title">직접 URL 입력 테스트</div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-url">🔴 악성URL</span>
+    <div class="link-info">
+      <div class="name">coopang-deals.xyz — 쿠팡 사칭 도메인</div>
+      <div class="desc">실제 존재하지 않는 도메인. Gemini가 도메인 패턴으로 위험 판정</div>
+      <a class="link-url" href="http://coopang-deals.xyz/redirect?item=1">
+        http://coopang-deals.xyz/redirect?item=1
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-url">🔴 악성URL</span>
+    <div class="link-info">
+      <div class="name">kakaobank-secure-verify.xyz — 카카오뱅크 사칭</div>
+      <div class="desc">피싱 도메인 패턴. 브랜드명 + secure + verify 조합</div>
+      <a class="link-url" href="http://kakaobank-secure-verify.xyz/auth">
+        http://kakaobank-secure-verify.xyz/auth
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+  <div class="link-card">
+    <span class="scenario-badge badge-safe">🟢 정상</span>
+    <div class="link-info">
+      <div class="name">github.com — 정상 사이트 비교</div>
+      <div class="desc">SAFE 판정 기준선</div>
+      <a class="link-url" href="https://github.com">
+        https://github.com
+      </a>
+    </div>
+    <span class="arrow">→</span>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>카카오뱅크 고객 안내</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #f7f8fa; color: #1a1a1a; }
+  .header { background: #ffeb00; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+  .header .logo { font-size: 20px; font-weight: 900; color: #1a1a1a; }
+  .container { max-width: 680px; margin: 40px auto; padding: 0 20px; }
+  .notice-card { background: white; border-radius: 12px; padding: 28px 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
+  .notice-card .badge { display: inline-block; background: #ff4444; color: white; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 10px; margin-bottom: 14px; }
+  .notice-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; line-height: 1.4; }
+  .notice-card .body { font-size: 14px; line-height: 1.9; color: #333; }
+  .cta { margin-top: 20px; display: flex; gap: 10px; }
+  .cta a { padding: 11px 24px; border-radius: 6px; font-size: 14px; font-weight: 700; text-decoration: none; }
+  .btn-primary { background: #ffeb00; color: #1a1a1a; }
+  .btn-secondary { border: 1px solid #ddd; color: #666; }
+  .normal-card { background: white; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 3px solid #03c75a; margin-top: 20px; }
+  .normal-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #333; }
+  .normal-card p { font-size: 13px; color: #777; line-height: 1.7; }
+  .demo-badge { position: fixed; top: 10px; right: 10px; background: #9C27B0; color: white; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .demo-hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; z-index: 9999; white-space: nowrap; }
+  .drag-target { border: 2px dashed #9C27B0; border-radius: 6px; padding: 12px; margin: 12px 0; position: relative; }
+  .drag-label { display: inline-block; background: #9C27B0; color: white; font-size: 10px; padding: 2px 8px; border-radius: 8px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="demo-badge">🟣 시나리오 3: 소셜엔지니어링 텍스트</div>
+<div class="demo-hint">💡 보라색 박스 안 텍스트를 드래그해보세요 — Gemini 분석 동작</div>
+
+<div class="header">
+  <div class="logo">🏦 카카오뱅크</div>
+</div>
+
+<div class="container">
+  <div class="notice-card">
+    <span class="badge">🚨 긴급 보안 공지</span>
+    <h2>고객님의 계정에서 비정상적인 접근이 감지되었습니다</h2>
+    <div class="body">
+      안녕하세요, 카카오뱅크입니다.<br><br>
+      <div class="drag-target">
+        <span class="drag-label">← 드래그 테스트 1: 긴급성 + 계정 정지 협박</span>
+        고객님의 계정에서 2024년 11월 14일 오전 3시 27분, 해외(중국 베이징) IP에서 로그인 시도가 감지되었습니다. 보안을 위해 지금 즉시 계정 인증을 완료하지 않으면 24시간 내 계정이 자동 정지됩니다. 아래 링크를 통해 본인 확인을 진행해 주시기 바랍니다.
+      </div>
+    </div>
+    <div class="cta">
+      <a href="http://kakaobank-secure-verify.xyz/auth" class="cta btn-primary">지금 바로 인증하기</a>
+      <a href="#" class="cta btn-secondary">나중에 하기</a>
+    </div>
+  </div>
+
+  <div class="notice-card">
+    <span class="badge" style="background:#ff9800;">📋 추가 드래그 테스트</span>
+    <h2 style="font-size:15px; margin-bottom:12px;">다른 소셜엔지니어링 문구들</h2>
+    <div class="drag-target">
+      <span class="drag-label">← 드래그 테스트 2: 당첨 사기 + 개인정보 요구</span>
+      축하합니다! 고객님은 이번 달 카카오뱅크 특별 이벤트 당첨자로 선정되셨습니다. 상금 500만원을 수령하려면 개인정보 확인이 필요합니다. 주민등록번호 앞 6자리와 계좌번호를 입력해 주세요.
+    </div>
+    <div class="drag-target" style="margin-top: 16px;">
+      <span class="drag-label">← 드래그 테스트 3: 국세청 사칭 + 악성 URL 포함</span>
+      [국세청] 고객님께 미환급 세금 238,400원이 있습니다. 환급을 위해 아래 링크에서 계좌 정보를 입력해주세요. 7일 내 미신청 시 소멸됩니다. hometax-refund.net/claim
+    </div>
+  </div>
+
+  <div class="normal-card">
+    <h3>✅ 정상 공지 예시 (비교용 — 드래그해도 SAFE 판정)</h3>
+    <p>카카오뱅크 앱이 업데이트되었습니다. 앱스토어에서 최신 버전(v5.2.1)으로 업데이트해 주세요. 이번 업데이트에는 보안 강화 및 UI 개선 사항이 포함되어 있습니다.</p>
+  </div>
+</div>
+</body>
+</html>

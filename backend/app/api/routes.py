@@ -111,7 +111,7 @@ async def analyze_url(req: URLRequest):
             
             if is_backend_exact_match or (req.is_exact_match and req.target_brand):
                 early_data = json.dumps({"safety_score": 100, "reason": f"[{brand_name}] 공식 홈페이지입니다. 안전하게 이용하세요. (로컬 검증 완료)"})
-                log_analysis("hover", req.url, "100", f"[{brand_name}] 공식 도메인 즉시 인증")
+                log_analysis("hover", req.url, "100", f"[{brand_name}] 공식 도메인 즉시 인증", raw_data=json.dumps({"reason": "exact_match"}, ensure_ascii=False))
                 yield json.dumps({"status": "success", "data": early_data}) + "\n"
                 return
             
@@ -140,7 +140,7 @@ async def analyze_url(req: URLRequest):
                 if vt_result.get("status") == "VT_DANGER":
                     vt_info = "위험 (기존 보안 엔진 블랙리스트에 이미 감지된 악성 도메인!)"
                     early_data = json.dumps({"safety_score": 10, "reason": "전문 보안 엔진(VirusTotal) 블랙리스트에 이미 감지된 악성 사이트입니다. 절대 접속하지 마세요! (빠른 차단)"})
-                    log_analysis("hover", req.url, "10", "전문 보안 엔진(VirusTotal)에서 차단됨")
+                    log_analysis("hover", req.url, "10", "전문 보안 엔진(VirusTotal)에서 차단됨", raw_data=json.dumps({"vt_findings": vt_result}, ensure_ascii=False))
                     yield json.dumps({"status": "success", "data": early_data}) + "\n"
                     return
                 else:
@@ -150,11 +150,15 @@ async def analyze_url(req: URLRequest):
             
             # --- 2-Tier Deep Scan (Optional) ---
             deep_scan_info = ""
+            raw_data_dict = {}
+            if vt_result: raw_data_dict["vt_findings"] = vt_result
+
             if req.enable_deep_scan:
                 # 1단계: 정적 검사
                 yield json.dumps({"progress": "🔍 정밀 분석 1단계 — 정적 HTML 검사 중..."}) + "\n"
                 try:
                     static_res = await inspect_url_static(req.url)
+                    raw_data_dict["static_findings"] = static_res
                     static_str = json.dumps(static_res, ensure_ascii=False)
                     
                     # 1단계 결과 요약 메시지
@@ -180,12 +184,14 @@ async def analyze_url(req: URLRequest):
                     
                     loop = asyncio.get_running_loop()
                     dynamic_res = await loop.run_in_executor(None, run_playwright_in_thread, req.url)
+                    raw_data_dict["dynamic_findings"] = dynamic_res
                     dynamic_str = json.dumps(dynamic_res, ensure_ascii=False)
                     
                     # 2단계 결과 요약 메시지
                     dyn_flags = []
-                    if dynamic_res.get("js_redirect_detected"): dyn_flags.append("JS 리다이렉션 감지")
-                    if dynamic_res.get("credential_form_detected"): dyn_flags.append("로그인 폼 렌더링 감지")
+                    if dynamic_res.get("is_redirected"): dyn_flags.append("리다이렉션 감지")
+                    if dynamic_res.get("has_password_field"): dyn_flags.append("비밀번호 폼 감지")
+                    if dynamic_res.get("has_hidden_form"): dyn_flags.append("히든 폼 감지")
                     dyn_summary = f"동적 검사 완료 ({'⚠️ ' + ', '.join(dyn_flags) if dyn_flags else '이상 없음'})"
                     yield json.dumps({"progress": f"✅ {dyn_summary}"}) + "\n"
                     
@@ -217,7 +223,7 @@ async def analyze_url(req: URLRequest):
             
             위 메타데이터와 시스템 컨텍스트를 파악하여, 이 사이트의 안전도 점수(0~100)를 평가하세요.
             100점은 '공식 사이트이며 완전히 안전함'을 뜻하고, 0점은 '심각한 사기/피싱 환경'을 의미합니다.
-            만약 [정밀 분석] 결과에서 리다이렉션 변조, 악성 폼 렌더링 등이 감지되었다면 점수를 크게 낮추세요.
+            만약 [정밀 분석] 결과에서 리다이렉션 변조, 악성 폼 렌더링, 특히 '히든 폼(has_hidden_form: true)'이 감지되었다면 사용자를 속이려는 악의적인 목적(투명 폼 등)이 매우 강하므로 점수를 0점 가까이 크게 낮추고, 이유에 투명/히든 폼의 위험성을 반드시 명시하세요.
             
             응답은 반드시 아래 JSON 형식으로만 반환하세요:
             {{"safety_score": 90, "reason": "이곳은 아이폰 공식 홈페이지입니다. 안심하고 쓰셔도 좋습니다."}}
@@ -240,7 +246,7 @@ async def analyze_url(req: URLRequest):
                 res_data = json.loads(response.text)
                 log_score = str(res_data.get("safety_score", 50))
                 log_reason = res_data.get("reason", "")
-                log_analysis("hover", req.url, log_score, log_reason)
+                log_analysis("hover", req.url, log_score, log_reason, raw_data=json.dumps(raw_data_dict, ensure_ascii=False))
             except Exception as db_e:
                 print("DB 로그 저장 에러:", db_e)
                 

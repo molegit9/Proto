@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>SafeWeb - 검색</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #fff; color: #1a1a1a; }
+  .header { background: #1a56db; padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+  .logo { color: white; font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+  .search-wrap { flex: 1; max-width: 600px; display: flex; }
+  .search-wrap input { flex: 1; padding: 10px 16px; border: none; border-radius: 4px 0 0 4px; font-size: 15px; outline: none; }
+  .search-wrap button { padding: 10px 20px; background: #1a56db; color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer; font-size: 14px; }
+  .nav { background: #f8f8f8; border-bottom: 1px solid #e0e0e0; padding: 8px 20px; display: flex; gap: 24px; }
+  .nav a { text-decoration: none; color: #444; font-size: 14px; }
+  .nav a:hover { color: #1a56db; }
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 300px; gap: 24px; }
+  .news-section h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1a56db; }
+  .news-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+  .news-item img { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; background: #e8e8e8; }
+  .news-item .content a { text-decoration: none; color: #1a1a1a; font-size: 14px; font-weight: 600; line-height: 1.4; }
+  .news-item .content a:hover { color: #1a56db; }
+  .news-item .meta { font-size: 12px; color: #999; margin-top: 4px; }
+  .sidebar .weather { background: #f0f8ff; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .sidebar .weather h3 { font-size: 14px; color: #555; margin-bottom: 8px; }
+  .sidebar .weather .temp { font-size: 36px; font-weight: 300; color: #1a1a1a; }
+  .sidebar .weather .desc { font-size: 13px; color: #888; margin-top: 4px; }
+  .sidebar .links { background: #fff8e1; border-radius: 8px; padding: 16px; }
+  .sidebar .links h3 { font-size: 14px; color: #555; margin-bottom: 12px; }
+  .sidebar .links a { display: block; text-decoration: none; color: #1a1a1a; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #f0e0a0; }
+  .sidebar .links a:hover { color: #ff6600; }
+  .footer { text-align: center; padding: 24px; background: #f8f8f8; border-top: 1px solid #e0e0e0; color: #999; font-size: 12px; margin-top: 40px; }
+  /* 시연 안내 배너 */
+  .demo-badge { position: fixed; top: 10px; right: 10px; background: #2196F3; color: white; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+<div class="demo-badge">🟢 시나리오 1: 정상 사이트</div>
+
+<div class="header">
+  <div class="logo">SafeWeb</div>
+  <div class="search-wrap">
+    <input type="text" placeholder="검색어를 입력하세요" value="오늘 날씨">
+    <button>검색</button>
+  </div>
+</div>
+
+<div class="nav">
+  <a href="#">뉴스</a>
+  <a href="#">쇼핑</a>
+  <a href="#">날씨</a>
+  <a href="#">지도</a>
+  <a href="#">스포츠</a>
+  <a href="#">금융</a>
+</div>
+
+<div class="container">
+  <div class="news-section">
+    <h2>주요 뉴스</h2>
+    <div class="news-item">
+      <div style="width:80px;height:60px;background:#ddd;border-radius:4px;flex-shrink:0;"></div>
+      <div class="content">
+        <a href="https://news.safeweb.kr/article/12345">정부, 내년 예산안 발표… 복지 예산 대폭 확대</a>
+        <div class="meta">연합뉴스 · 2시간 전</div>
+      </div>
+    </div>
+    <div class="news-item">
+      <div style="width:80px;height:60px;background:#ddd;border-radius:4px;flex-shrink:0;"></div>
+      <div class="content">
+        <a href="https://news.safeweb.kr/article/12346">삼성전자, 3분기 실적 발표… 영업이익 10조 돌파</a>
+        <div class="meta">서울경제 · 3시간 전</div>
+      </div>
+    </div>
+    <div class="news-item">
+      <div style="width:80px;height:60px;background:#ddd;border-radius:4px;flex-shrink:0;"></div>
+      <div class="content">
+        <a href="https://sports.safeweb.kr/football/2024">손흥민, 시즌 10호 골 기록… 팀 3-1 승리 견인</a>
+        <div class="meta">스포츠조선 · 5시간 전</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="weather">
+      <h3>📍 대전광역시</h3>
+      <div class="temp">18°</div>
+      <div class="desc">맑음 · 최고 21° 최저 12°</div>
+    </div>
+    <div class="links">
+      <h3>바로가기</h3>
+      <a href="https://mail.safeweb.kr">메일</a>
+      <a href="https://blog.safeweb.kr">블로그</a>
+      <a href="https://cafe.safeweb.kr">카페</a>
+      <a href="https://shopping.safeweb.kr">쇼핑</a>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  © 2024 SafeWeb Corp. | 개인정보처리방침 | 이용약관 | 고객센터
+</div>
+</body>
+</html>

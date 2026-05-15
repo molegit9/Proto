@@ -15,7 +15,7 @@
 |------|------|
 | **URL 호버 검사** | 링크에 0.5초 이상 마우스를 올리면 즉시 작동 — 타이포스쿼팅 탐지, VirusTotal 악성 여부, RDAP 도메인 생성일을 병렬 조회 후 LLM이 최종 안전도(0~100점)를 툴팁으로 표시 |
 | **텍스트 드래그 검사** | 의심 문구를 드래그하면 ChromaDB 벡터 DB에서 유사 피싱 판례를 검색(RAG)하고 Gemini가 사회공학적 사기 여부를 판정 |
-| **2-Tier 정밀 분석** | ① 정적 HTML 검사 → ② Playwright 헤드리스 브라우저로 JS 리다이렉션·폼 렌더링 동적 추적 |
+| **2-Tier 정밀 분석** | ① 정적 HTML 검사 → ② Playwright 브라우저로 투명 폼(Hidden Form), 리다이렉션 등 동적 악성 행위 렌더링 추적 |
 
 ### 2. Gmail 심층 분석 (Deep Email Analysis)
 
@@ -48,10 +48,11 @@ API 응답 JSON에도 포함됩니다:
 }
 ```
 
-### 4. 통합 로그 대시보드 (Popup)
+### 4. 통합 로그 대시보드 (Popup) & 전문가용 Raw DB
 
-- 이메일/URL/텍스트 분석 이력(최근 20건) 한눈에 조회
-- DB 초기화(클릭 한 번으로 캐시 비우기)
+- **일반 대시보드:** 이메일/URL/텍스트 분석 이력(최근 20건)을 한눈에 조회 가능합니다.
+- **전문가용 원본 DB (`raw_data`):** 동적 분석(Playwright DOM 이벤트, 히든 폼 탐지) 및 정적 검사 결과의 원본 JSON 페이로드가 백엔드 SQLite DB에 영구 저장됩니다. (VS Code SQLite Viewer 등으로 분석 가능)
+- **DB 안전 초기화:** 확장 프로그램 팝업에서 DB 캐시를 비우더라도, 일반 로그(SQLite)만 삭제되며 **RAG 판례 학습 데이터(ChromaDB)는 절대 초기화되지 않고 안전하게 보존**됩니다.
 
 ---
 
@@ -82,8 +83,9 @@ c:\Dev\Plus\
             ├── gemini_service.py  # Gemini LLM 호출 (모델 Fallback 포함)
             ├── virustotal_service.py
             ├── link_sandbox.py    # 정적 URL 분석
-            ├── browser_analyzer.py # Playwright 동적 분석
-            └── database.py        # SQLite 로깅 (rag_used, rag_doc_count 포함)
+            ├── browser_analyzer.py # Playwright 동적 분석 (투명 폼, 리다이렉션 추적)
+            └── database.py        # SQLite 로깅 (raw_data 원본 로그, rag_doc_count 포함)
+├── test/                          # 로컬 검증용 피싱 시뮬레이터 HTML (정상, 타이포스쿼팅, 동적 우회, 사회공학)
 ```
 
 ---
@@ -132,6 +134,8 @@ uvicorn app.main:app --reload
 ---
 
 ### Step 2. Chrome Extension 설치
+
+> **참고:** 확장 프로그램 ID 불일치 문제를 해결하기 위해 `manifest.json` 내부에 RSA 공개키(`key`)가 하드코딩되어 있습니다. 따라서 팀원 간 로컬 환경이 달라도 동일한 Extension ID가 보장됩니다.
 
 1. `chrome://extensions/` 접속
 2. **개발자 모드** 켜기

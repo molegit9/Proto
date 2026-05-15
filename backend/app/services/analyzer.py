@@ -130,6 +130,7 @@ async def analyze_email_pipeline(message_id: str, access_token: str) -> EmailAna
         summary=response.summary,
         rag_used=response.rag_used,
         rag_doc_count=response.rag_doc_count,
+        raw_data=response.model_dump_json(exclude={"mail_summary", "rag_retrieved_docs"}), # 방대한 본문 요약 등은 제외하고 검사 결과 위주로
     )
 
     return response
