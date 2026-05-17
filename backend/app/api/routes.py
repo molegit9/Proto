@@ -17,7 +17,7 @@ from app.services.analyzer import analyze_email_pipeline
 # Service Imports
 from app.services.database import get_db, log_analysis, get_cached_analysis, get_recent_logs
 from app.services.virustotal_service import check_url_virustotal
-from app.services.rag_service import collection as rag_collection
+from app.services import rag_service
 from app.services.link_sandbox import inspect_url_static
 from app.services.browser_analyzer import inspect_url_with_playwright
 from app.core.config import settings
@@ -265,24 +265,46 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
             yield json.dumps({"progress": "RAG 지식베이스 검색 중... 🔍"}) + "\n"
             
             retrieved_context = ""
-            if rag_collection is not None:
-                results = rag_collection.query(query_texts=[req.selected_text], n_results=3)
+            highest_sim_info = ""
+            if rag_service.collection is not None:
+                results = rag_service.collection.query(query_texts=[req.selected_text], n_results=3)
                 
                 if results and "documents" in results and len(results["documents"]) > 0 and len(results["documents"][0]) > 0:
                     docs = results["documents"][0]
                     metas = results["metadatas"][0]
                     distances = results.get("distances", [[999]])[0]
                     
+                    if len(distances) > 0:
+                        sim_pct = max(0, min(100, int((1 - distances[0]) * 100)))
+                        top_label = str(metas[0].get("label", "unknown"))
+                        label_name = "알 수 없음"
+                        if top_label == "2": label_name = "악성 피싱 판례"
+                        elif top_label in ["1", "3"]: label_name = "안전 문구 판례"
+                        elif top_label in ["4", "5"]: label_name = "악성 스팸 판례"
+                        else: label_name = f"라벨 {top_label}"
+                        
+                        highest_sim_info = f"<br><br>💡 참고: DB 내 가장 유사한 과거 판례는 [{label_name}] (유사도 {sim_pct}%) 입니다."
+
                     if len(distances) > 0 and distances[0] < 0.15:
                         best_label = str(metas[0].get("label", "0"))
+                        
+                        raw_data_dict = {"rag_match": True, "distance": distances[0], "metadata": metas[0]}
+                        raw_str = json.dumps(raw_data_dict, ensure_ascii=False)
+                        
                         if best_label == "2":
-                            yield json.dumps({"risk_level": "위험", "score": 95, "reason": "보안 데이터베이스의 악성 피싱 판례와 100% 일치하여, AI 딥러닝을 거치지 않고 초고속으로 차단했습니다.", "mitigation": "절대로 링크를 클릭하지 마세요."}) + "\n"
+                            reason_msg = "보안 데이터베이스의 악성 피싱 판례와 100% 일치하여, AI 딥러닝을 거치지 않고 초고속으로 차단했습니다."
+                            log_analysis("drag", req.selected_text, "5", reason_msg, raw_str)
+                            yield json.dumps({"risk_level": "위험", "score": 95, "reason": reason_msg, "mitigation": "절대로 링크를 클릭하지 마세요."}) + "\n"
                             return
                         elif best_label in ["1", "3"]:
-                            yield json.dumps({"risk_level": "안전", "score": 5, "reason": "보안 DB의 안전한 문구 판례와 100% 일치하여 AI 분석을 생략하고 통과시킵니다.", "mitigation": "안심하세요."}) + "\n"
+                            reason_msg = "보안 DB의 안전한 문구 판례와 100% 일치하여 AI 분석을 생략하고 통과시킵니다."
+                            log_analysis("drag", req.selected_text, "95", reason_msg, raw_str)
+                            yield json.dumps({"risk_level": "안전", "score": 5, "reason": reason_msg, "mitigation": "안심하세요."}) + "\n"
                             return
                         elif best_label in ["4", "5"]:
-                            yield json.dumps({"risk_level": "위험", "score": 85, "reason": "알려진 악성 스팸 메일 판례와 파일이 100% 동일합니다. 차단됨.", "mitigation": "즉시 삭제하세요."}) + "\n"
+                            reason_msg = "알려진 악성 스팸 메일 판례와 파일이 100% 동일합니다. 차단됨."
+                            log_analysis("drag", req.selected_text, "15", reason_msg, raw_str)
+                            yield json.dumps({"risk_level": "위험", "score": 85, "reason": reason_msg, "mitigation": "즉시 삭제하세요."}) + "\n"
                             return
 
                     context_pieces = []
@@ -334,6 +356,23 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
             
             try:
                 res_data = json.loads(response.text)
+                try:
+                    # RAG 최고 유사도 정보가 있으면 AI의 reason에 덧붙이기
+                    if highest_sim_info:
+                        res_data["reason"] = res_data.get("reason", "") + highest_sim_info
+
+                    # 팝업 UI의 안전도 로직과 맞추기 위해 점수 역산 (100 - risk_score = safety_score)
+                    score = int(res_data.get("score", 50))
+                    
+                    raw_data_dict = {"rag_match": False, "ai_used": True}
+                    if retrieved_context:
+                        raw_data_dict["retrieved_context"] = retrieved_context
+                        
+                    raw_str = json.dumps(raw_data_dict, ensure_ascii=False)
+                    
+                    log_analysis("drag", req.selected_text, str(100 - score), res_data.get("reason", ""), raw_str)
+                except Exception as e:
+                    print("Drag DB Log Error:", e)
                 yield json.dumps(res_data) + "\n"
             except json.JSONDecodeError:
                 yield json.dumps({"risk_level": "에러", "score": 0, "reason": "AI 파싱 오류", "mitigation": "-"}) + "\n"
