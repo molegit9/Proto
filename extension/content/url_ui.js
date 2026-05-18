@@ -86,7 +86,6 @@ function initUrlAnalysis() {
       tooltip.classList.add(colorClass);
       
       tooltip.innerHTML = `
-          <div class="header">Zero-shot URL 탐지기</div>
           <div class="score">보안 점수: <strong>${safetyScore}점</strong> / 100점 (${label})</div>
           <div class="reason">${reason}</div>
       `;
@@ -112,7 +111,6 @@ function initUrlAnalysis() {
       }
       // 이미 progress 툴팁이 있다면 메시지만 업데이트 (위치 고정)
       currentTooltip.innerHTML = `
-          <div class="header">Zero-shot URL 탐지기</div>
           <div class="reason" style="display:flex;align-items:center;gap:6px;">
               <span style="animation:spin 1s linear infinite;display:inline-block;">⏳</span>
               <span>${message}</span>
