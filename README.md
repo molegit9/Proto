@@ -7,6 +7,8 @@
 
 ---
 
+https://youtu.be/S8i36zZRL7k 
+
 ## 🌟 주요 기능 (Key Features)
 
 ### 1. 일반 웹페이지 실시간 보안 (Zero-shot Detector)
