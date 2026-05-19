@@ -6,7 +6,7 @@
 과거 분리되어 있던 `MailReader`(Gmail 심층 분석)와 `Zp`(제로샷 실시간 웹 검사기)를 단일 FastAPI 백엔드 + Chrome Extension으로 통합한 프로젝트입니다.
 
 ---
-
+https://youtu.be/SfNGCjKW3M0
 https://youtu.be/S8i36zZRL7k 
 
 ## 🌟 주요 기능 (Key Features)
