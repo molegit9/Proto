@@ -1,4 +1,4 @@
-# 🛡️ Phishing Security Assistant (통합 보안 어시스턴트)
+# 🛡️ 시켜줘, 너의 웹보안관 : 보안 지식이 없는 사용자를 위한 직관적 웹 위협 인디케이터 시스템
 
 > **LLM + RAG 기반 올인원 피싱 탐지 Chrome Extension**  
 > 일반 웹페이지 URL/텍스트 분석부터 Gmail 이메일 심층 분석까지 하나의 통합 시스템으로 처리합니다.
