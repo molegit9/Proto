@@ -109,7 +109,11 @@ async def analyze_url(req: URLRequest):
             is_backend_exact_match = base_domain in top_brands
             brand_name = base_domain if is_backend_exact_match else req.target_brand
             
-            if is_backend_exact_match or (req.is_exact_match and req.target_brand):
+            # public hosting domains check (skip whitelist auto-pass & force Tier 2 dynamic analysis)
+            public_hosting_domains = ["github.io", "vercel.app", "netlify.app"]
+            is_public_hosting = any(domain == ph or domain.endswith("." + ph) for ph in public_hosting_domains)
+            
+            if (is_backend_exact_match or (req.is_exact_match and req.target_brand)) and not is_public_hosting:
                 early_data = json.dumps({"safety_score": 100, "reason": f"[{brand_name}] 공식 홈페이지입니다. 안전하게 이용하세요. (로컬 검증 완료)"})
                 log_analysis("hover", req.url, "100", f"[{brand_name}] 공식 도메인 즉시 인증", raw_data=json.dumps({"reason": "exact_match"}, ensure_ascii=False))
                 yield json.dumps({"status": "success", "data": early_data}) + "\n"
@@ -153,7 +157,7 @@ async def analyze_url(req: URLRequest):
             raw_data_dict = {}
             if vt_result: raw_data_dict["vt_findings"] = vt_result
 
-            if req.enable_deep_scan:
+            if req.enable_deep_scan or is_public_hosting:
                 # 1단계: 정적 검사
                 yield json.dumps({"progress": "🔍 정밀 분석 1단계 — 정적 HTML 검사 중..."}) + "\n"
                 try:

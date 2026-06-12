@@ -26,6 +26,12 @@ def should_escalate_to_browser_analysis(url: str, vt_stats: dict, static_result:
     """Tier 2 동적 분석 에스컬레이션 조건 총괄"""
     # 1. 단축 URL은 항상 동적 분석 수행
     if is_short_url(url): return True
+    # 1-2. 사용자 생성 콘텐츠 플랫폼(Public Hosting Platform)은 항상 동적 분석 수행
+    public_hosting_domains = ["github.io", "vercel.app", "netlify.app"]
+    parsed = urllib.parse.urlparse(url)
+    domain = parsed.netloc.lower()
+    if any(domain == ph or domain.endswith("." + ph) for ph in public_hosting_domains):
+        return True
     # 2. VirusTotal 악성 결과 (명확한 스키마 stats 기준)
     if vt_stats.get("malicious", 0) > 0 or vt_stats.get("suspicious", 0) > 0: return True
     # 3. 정적 분석에서 리다이렉션 또는 로그인 폼 감지
