@@ -46,28 +46,28 @@ function renderResultBanner(data) {
   if (data.rag_used) {
     // RAG 사용됨: 뱃지 + 참조 판례 섹션
     ragBadgeHtml = `
-      <span class="rag-badge rag-active" title="RAG(검색 증강 생성) 기반 분석이 적용되었습니다.">
-        🧠 RAG: ${data.rag_doc_count}개 판례 참조됨
+      <span class="rag-badge rag-active" title="과거 유사 위협 데이터를 기반으로 분석을 수행했습니다.">
+        🧠 과거 사례: ${data.rag_doc_count}개 사례 참조됨
       </span>`;
 
     if (data.rag_retrieved_docs && data.rag_retrieved_docs.length > 0) {
       const docsListHtml = data.rag_retrieved_docs.map((doc, i) => {
-        const labelName = doc.label === "2" || doc.label === "4" || doc.label === "5" ? "⚠️ 피싱/악성" :
-                          doc.label === "1" || doc.label === "3" ? "✅ 정상" : `라벨 ${doc.label}`;
+        const labelName = doc.label === "2" || doc.label === "4" || doc.label === "5" ? "⚠️ 악성 위협" :
+                          doc.label === "1" || doc.label === "3" ? "✅ 정상" : `유형 ${doc.label}`;
         const similarity = doc.distance !== undefined ? `유사도: ${(1 - doc.distance).toFixed(2) * 100 | 0}%` : '';
         const snippet = doc.document ? doc.document.substring(0, 120) + (doc.document.length > 120 ? '…' : '') : '';
         return `<div class="rag-doc-item">
-          <span class="rag-doc-meta">[판례 ${i+1}] ${labelName} &nbsp;|&nbsp; 출처: ${doc.source} &nbsp;|&nbsp; ${similarity}</span>
+          <span class="rag-doc-meta">[참고 사례 ${i+1}] ${labelName} &nbsp;|&nbsp; 출처: ${doc.source} &nbsp;|&nbsp; ${similarity}</span>
           <div class="rag-doc-snippet">${snippet}</div>
         </div>`;
       }).join('');
-      ragDocsHtml = createCollapsibleSection("🔍 RAG 참조 판례", docsListHtml, "banner-rag-docs", "collapsed");
+      ragDocsHtml = createCollapsibleSection("🔍 과거 유사 위협 사례 확인", docsListHtml, "banner-rag-docs", "collapsed");
     }
   } else {
     // RAG 미사용: 단순 LLM 판정임을 명시
     ragBadgeHtml = `
-      <span class="rag-badge rag-inactive" title="Vector DB 미연결 또는 유사 판례 없음. LLM 단독 판정.">
-        🤖 LLM 단독 판정
+      <span class="rag-badge rag-inactive" title="안전한 분석을 위해 AI 실시간 문맥 추론을 수행했습니다.">
+        🤖 AI 실시간 문맥 분석
       </span>`;
   }
   // ─────────────────────────────────────────────────────────────────

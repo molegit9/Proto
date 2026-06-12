@@ -1,8 +1,7 @@
 fastapi
 uvicorn
 google-genai
-google-auth
-google-auth-oauthlib
+google-generativeai
 playwright
 beautifulsoup4
 httpx
@@ -12,5 +11,4 @@ chromadb
 sentence-transformers
 pandas
 tqdm
-aiosqlite
 tldextract

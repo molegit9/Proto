@@ -5,7 +5,7 @@ REM Change directory to the script location
 cd /d "%~dp0"
 
 echo ===================================================
-echo   Starting SecurityGuard FastAPI Server on Windows
+echo   Starting WebSecurityGuard (웹보안관) FastAPI Server on Windows
 echo ===================================================
 
 REM 1. Check if virtual environment exists and activate it

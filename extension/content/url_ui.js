@@ -147,8 +147,9 @@ function initUrlAnalysis() {
               console.log(`[Phishing Detector] 로컬 사칭 탐지 결과:`, brandData);
               
               // 2. 백엔드(FastAPI)로 검사 요청 (Gemini + RDAP 병렬)
-              console.log(`[Phishing Detector] 서버 API 호출 중... (localhost:8000)`);
-              const response = await fetch('http://localhost:8000/api/v1/analyze', {
+              const baseURL = await getBaseURL();
+              console.log(`[Phishing Detector] 서버 API 호출 중... (${baseURL})`);
+              const response = await fetch(`${baseURL}/api/v1/analyze`, {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
                   body: JSON.stringify({
@@ -244,7 +245,8 @@ function initUrlAnalysis() {
                   if (currentTooltip) currentTooltip.classList.remove('safe', 'danger', 'warning');
               }
               
-              const response = await fetch('http://localhost:8000/api/v1/analyze/text', {
+              const baseURL = await getBaseURL();
+              const response = await fetch(`${baseURL}/api/v1/analyze/text`, {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
                   body: JSON.stringify({

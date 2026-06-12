@@ -1,3 +1,5 @@
+importScripts('/content/api.js');
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "ANALYZE_EMAIL") {
     chrome.identity.getAuthToken({ interactive: true }, async (token) => {
@@ -7,7 +9,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       
       try {
-        const res = await fetch("http://localhost:8000/api/analyze-email", {
+        const baseURL = await getBaseURL();
+        const res = await fetch(`${baseURL}/api/analyze-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message_id: request.messageId, access_token: token })
@@ -24,3 +27,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // 비동기 응답 대기
   }
 });
+
