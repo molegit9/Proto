@@ -5,7 +5,7 @@ REM Change directory to the script location
 cd /d "%~dp0"
 
 echo ===================================================
-echo   Starting WebSecurityGuard (웹보안관) FastAPI Server on Windows
+echo   Starting WebSecurityGuard FastAPI Server on Windows
 echo ===================================================
 
 REM 1. Check if virtual environment exists and activate it
@@ -46,7 +46,7 @@ set /p "ENABLE_LT=Enable Remote Tunneling (Localtunnel) for Remote Demo? [y/n] (
 
 if /i "!ENABLE_LT!"=="y" (
     echo [INFO] Starting uvicorn server in a new window...
-    start "웹보안관 백엔드 서버" "!PYTHON_EXE!" -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+    start "WebSecurityGuard Backend Server" "!PYTHON_EXE!" -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000
     
     echo ===================================================
     echo   Starting Localtunnel...
