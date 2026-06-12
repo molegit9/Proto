@@ -15,8 +15,8 @@ async def analyze_email_pipeline(message_id: str, access_token: str) -> EmailAna
     clean_html = sanitize_email_dom(raw_email["body_html"])
     visible_text = extract_visible_text(clean_html)
     
-    # 백그라운드에서 요약 작업 시작
-    summary_task = asyncio.create_task(summarize_email(visible_text))
+    # 백그라운드에서 요약 작업 시작 (속도 개선을 위해 텍스트 3000자 절삭)
+    summary_task = asyncio.create_task(summarize_email(visible_text[:3000]))
     
     # 2. URL 정규화, 중복 제거 및 우선순위 선정 (본문 등장 순 기준 상위 3개)
     raw_urls = extract_links(raw_email["body_html"])
@@ -85,7 +85,9 @@ async def analyze_email_pipeline(message_id: str, access_token: str) -> EmailAna
     dynamic_results = [r for r in dynamic_results_raw if not isinstance(r, Exception)]
 
     # 6. LLM Phase 2 (최종 판정) - 만약 동적 분석이 추가되었다면 다시 판정, 아니면 Phase 1 결과 사용
-    rag_docs = await query_rag_with_meta(visible_text)  # 메타데이터 포함 검색
+    # RAG 임베딩 연산 병목 방지를 위해 메일 제목과 본문 상단 1000자만 결합하여 쿼리
+    rag_query_text = f"{raw_email.get('subject', '')}\n{visible_text[:1000]}"
+    rag_docs = await query_rag_with_meta(rag_query_text)  # 메타데이터 포함 검색
     rag_used = len(rag_docs) > 0
     rag_context = "\n".join(item["document"] for item in rag_docs) if rag_docs else None
 

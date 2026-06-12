@@ -24,16 +24,16 @@ def check_domain_mismatch(url: str, sender_domain: str) -> bool:
 
 def should_escalate_to_browser_analysis(url: str, vt_stats: dict, static_result: dict, sender_domain: str, llm_phase1_risk: str) -> bool:
     """Tier 2 동적 분석 에스컬레이션 조건 총괄"""
-    # 1. 단축 URL
+    # 1. 단축 URL은 항상 동적 분석 수행
     if is_short_url(url): return True
     # 2. VirusTotal 악성 결과 (명확한 스키마 stats 기준)
     if vt_stats.get("malicious", 0) > 0 or vt_stats.get("suspicious", 0) > 0: return True
-    # 3. 도메인 불일치
-    if check_domain_mismatch(url, sender_domain): return True
-    # 4. 정적 분석에서 리다이렉션 또는 로그인 폼 감지
+    # 3. 정적 분석에서 리다이렉션 또는 로그인 폼 감지
     if static_result.get("is_redirected") or static_result.get("has_password_field") or static_result.get("has_login_form"): return True
-    # 5. LLM 1차 판단이 MEDIUM 이상인 경우
-    if llm_phase1_risk in ["MEDIUM", "HIGH"]: return True
+    # 4. LLM 1차 판단이 HIGH인 경우에만 단독 동적 분석 수행
+    if llm_phase1_risk == "HIGH": return True
+    # 5. 도메인이 불일치하고 + 1차 AI 리스크가 MEDIUM 이상인 복합 조건일 때만 동적 분석 수행
+    if check_domain_mismatch(url, sender_domain) and llm_phase1_risk in ["MEDIUM", "HIGH"]: return True
         
     return False
 
