@@ -9,7 +9,7 @@ async def analyze_with_gemini(text: str, sender: str, subject: str, link_finding
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY":
         return fallback_response("GEMINI_API_KEY가 설정되지 않았습니다.")
 
-    model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
+    model = genai.GenerativeModel('gemini-3.1-flash-lite')
     
     prompt = f"""
     당신은 피싱 이메일 전문 보안 분석가입니다. 아래 메일 정보를 분석하고 반드시 지정된 JSON 형식으로만 응답하세요.
@@ -54,7 +54,7 @@ async def summarize_email(visible_text: str) -> str:
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY":
         return ""
 
-    model = genai.GenerativeModel('gemini-3.1-flash-lite-preview')
+    model = genai.GenerativeModel('gemini-3.1-flash-lite')
     
     prompt = f"""시스템 지시사항:
 당신은 이메일 내용을 있는 그대로 요약하는 도구입니다.

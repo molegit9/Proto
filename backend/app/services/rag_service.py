@@ -38,7 +38,7 @@ def init_vector_db(csv_path: str = None, sample_size: int = 10000):
         # 이미 데이터가 들어가 있다면 벡터화 과정을 건너뜀 (서버 재시작 속도 대폭 향상)
         if collection.count() > 0:
             print(f"[3/4] Database already initialized! Skipping embedding. (Count: {collection.count()})")
-            print(f"[4/4] 🚀 Vector Database successfully loaded at {db_path}")
+            print(f"[4/4] Vector Database successfully loaded at {db_path}")
             return
 
         print("[3/4] Vectorizing texts into the database (this might take a few minutes)...")
@@ -60,7 +60,7 @@ def init_vector_db(csv_path: str = None, sample_size: int = 10000):
                 ids=ids
             )
 
-        print(f"[4/4] 🚀 Vector Database successfully initialized at {db_path}")
+        print(f"[4/4] Vector Database successfully initialized at {db_path}")
         print(f"Total documents inside DB: {collection.count()}")
     except Exception as e:
         print(f"Vector DB init error: {e}")

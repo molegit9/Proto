@@ -48,7 +48,7 @@ async def analyze_with_gemini(text: str, sender: str, subject: str, link_finding
     
     try:
         response = await client.aio.models.generate_content(
-            model='gemini-3.1-flash-lite-preview',
+            model='gemini-3.1-flash-lite',
             contents=prompt
         )
         cleaned_text = response.text.replace('```json', '').replace('```', '').strip()
@@ -101,7 +101,7 @@ async def summarize_email(visible_text: str) -> str:
     
     try:
         response = await client.aio.models.generate_content(
-            model='gemini-3.1-flash-lite-preview',
+            model='gemini-3.1-flash-lite',
             contents=prompt
         )
         return response.text.strip()
@@ -154,7 +154,7 @@ async def analyze_content(action_type: str, content: str) -> dict:
     
     try:
         response = await client.aio.models.generate_content(
-            model='gemini-3.1-flash-lite-preview',
+            model='gemini-3.1-flash-lite',
             contents=prompt,
             config={"response_mime_type": "application/json"}
         )

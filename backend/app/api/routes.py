@@ -235,7 +235,7 @@ async def analyze_url(req: URLRequest):
                 return
                 
             response = await client.aio.models.generate_content(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-3.1-flash-lite',
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -262,7 +262,7 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
     """Zp NDJSON 스트리밍 (Drag/Text)"""
     async def event_generator():
         try:
-            yield json.dumps({"progress": "RAG 지식베이스 검색 중... 🔍"}) + "\n"
+            yield json.dumps({"progress": "과거 사례 검색 중... 🔍"}) + "\n"
             
             retrieved_context = ""
             highest_sim_info = ""
@@ -283,7 +283,7 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
                         elif top_label in ["4", "5"]: label_name = "악성 스팸 판례"
                         else: label_name = f"라벨 {top_label}"
                         
-                        highest_sim_info = f"<br><br>💡 참고: DB 내 가장 유사한 과거 판례는 [{label_name}] (유사도 {sim_pct}%) 입니다."
+                        highest_sim_info = f"<br><br>💡 참고:  기존에 축적된 과거 신고 사례 중 가장 유사한 내용은 [{label_name}] (유사도 {sim_pct}%) 입니다."
 
                     if len(distances) > 0 and distances[0] < 0.15:
                         best_label = str(metas[0].get("label", "0"))
@@ -292,17 +292,17 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
                         raw_str = json.dumps(raw_data_dict, ensure_ascii=False)
                         
                         if best_label == "2":
-                            reason_msg = "보안 데이터베이스의 악성 피싱 판례와 100% 일치하여, AI 딥러닝을 거치지 않고 초고속으로 차단했습니다."
+                            reason_msg = "이미 신고 및 검증이 완료된 악성 사기 문구와 완전히 일치하여, 추가 분석 없이 즉시 차단했습니다."
                             log_analysis("drag", req.selected_text, "5", reason_msg, raw_str)
                             yield json.dumps({"risk_level": "위험", "score": 95, "reason": reason_msg, "mitigation": "절대로 링크를 클릭하지 마세요."}) + "\n"
                             return
                         elif best_label in ["1", "3"]:
-                            reason_msg = "보안 DB의 안전한 문구 판례와 100% 일치하여 AI 분석을 생략하고 통과시킵니다."
+                            reason_msg = "확인된 안전 문구와 완전히 일치하여 실시간 확인 과정을 생략하고 통과시킵니다."
                             log_analysis("drag", req.selected_text, "95", reason_msg, raw_str)
                             yield json.dumps({"risk_level": "안전", "score": 5, "reason": reason_msg, "mitigation": "안심하세요."}) + "\n"
                             return
                         elif best_label in ["4", "5"]:
-                            reason_msg = "알려진 악성 스팸 메일 판례와 파일이 100% 동일합니다. 차단됨."
+                            reason_msg = "스팸 및 광고성 메시지로 분류된 기존 사례와 내용이 완전히 동일하여 즉시 차단되었습니다."
                             log_analysis("drag", req.selected_text, "15", reason_msg, raw_str)
                             yield json.dumps({"risk_level": "위험", "score": 85, "reason": reason_msg, "mitigation": "즉시 삭제하세요."}) + "\n"
                             return
@@ -316,10 +316,11 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
             else:
                 retrieved_context = "(로컬 Vector DB가 오프라인입니다.)"
 
-            yield json.dumps({"progress": "AI(LLM)가 정보를 받아 처리 중... 🤖"}) + "\n"
+            yield json.dumps({"progress": "AI가 정보를 받아 처리 중... 🤖"}) + "\n"
 
             rag_prompt = f"""
             당신은 개인용 보안 시스템의 코어 엔진 역할을 하는 RAG(검색 증강 생성) 기반 위협 분석 AI입니다.
+            전문적인 기술 용어(RAG, 레이블, 데이터베이스 명칭 등)는 절대 쓰지 말고, 중학생도 이해할 수 있는 쉬운 일상어로 1~2문장으로 판정 이유를 대답해야 합니다.
             사용자가 웹에서 의심스러워 드래그한 텍스트에 스미싱, 피싱, 악성 메일 유도 등 사회공학적 사기 의도가 있는지 분석하세요.
 
             **[분석 대상 텍스트]**
@@ -332,8 +333,8 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
             분석 결과는 **0~100점**의 score로 표기해야 합니다.
             
             반드시 지정된 아래 JSON Schema 형식으로만 응답하세요:
-            {{"risk_level": "위험", "score": 95, "reason": "이 텍스트는 RAG 데이터베이스의 Label 2 판례와 문맥이 99% 일치하는 악성 택배 스미싱 수법입니다.", "mitigation": "절대로 링크를 클릭하지 마세요."}}
-            """
+            {{"risk_level": "위험", "score": 95, "reason": "분석 결과, 이 문구는 기존에 신고된 과거 택배 사칭 수법과 내용이 매우 유사한 위험한 사기 문자 유형입니다.", "mitigation": "메시지에 포함된 링크를 절대로 클릭하지 마세요."}}
+"""
 
             client = get_genai_client()
             if client is None:
@@ -341,7 +342,7 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
                 return
 
             response = await client.aio.models.generate_content(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-3.1-flash-lite',
                 contents=rag_prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",

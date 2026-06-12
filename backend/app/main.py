@@ -35,7 +35,11 @@ app = FastAPI(title="Phishing Security Assistant API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ],
+    allow_origin_regex=r"chrome-extension://.*|https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

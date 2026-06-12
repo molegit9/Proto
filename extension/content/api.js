@@ -1,1 +1,20 @@
-// API 통신 관련 유틸리티 (현재는 background.js에서 모두 처리 중이지만, 확장성을 위해 분리)
+const REMOTE_SERVER_IP = "12.34.56.78"; // <SERVER_IP> - 원격 서버 고정 IP로 대체 가능
+
+async function getBaseURL() {
+  return new Promise((resolve) => {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(['useLocalServer', 'remoteServerIp'], (result) => {
+        // 기본값: 로컬 서버 사용 (true)
+        const useLocal = result.useLocalServer !== false;
+        if (useLocal) {
+          resolve("http://localhost:8000");
+        } else {
+          const remoteIp = result.remoteServerIp || REMOTE_SERVER_IP;
+          resolve(`http://${remoteIp}:8000`);
+        }
+      });
+    } else {
+      resolve("http://localhost:8000");
+    }
+  });
+}

@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 0. Update Server Mode Badge
+    const serverBadge = document.getElementById('server-badge');
+    if (serverBadge && typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.get(['useLocalServer'], function(result) {
+            const useLocal = result.useLocalServer !== false;
+            if (useLocal) {
+                serverBadge.innerText = 'LOCAL';
+                serverBadge.className = 'server-badge local';
+            } else {
+                serverBadge.innerText = 'SERVER';
+                serverBadge.className = 'server-badge server';
+            }
+        });
+    }
+
     // 1. Tab Switching
     const tabs = document.querySelectorAll('.tab-btn');
     const contents = document.querySelectorAll('.tab-content');
@@ -55,7 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.innerText = "서버 통신 중...";
         
         try {
-            const response = await fetch('http://localhost:8000/api/clear-db', {
+            const baseURL = await getBaseURL();
+            const response = await fetch(`${baseURL}/api/clear-db`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'}
             });
@@ -82,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = '<div id="logs-loading">기록을 불러오는 중...</div>';
         
         try {
-            const response = await fetch('http://localhost:8000/api/logs?limit=20');
+            const baseURL = await getBaseURL();
+            const response = await fetch(`${baseURL}/api/logs?limit=20`);
             if (!response.ok) throw new Error('Failed to load logs');
             
             const data = await response.json();
