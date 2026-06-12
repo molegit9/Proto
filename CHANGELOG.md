@@ -4,9 +4,11 @@
 
 ---
 
-## 📅 [2026-06-12] 0612 추가사항 - Gemini GA 모델 업데이트, 익스텐션 원격 IP 동적 설정 & 배치 파일 최적화
+## 📅 [2026-06-12] 0612 추가사항 - Gemini GA 모델 업데이트, 익스텐션 원격 IP 동적 설정 & 배치 파일 최적화 & 로컬 서버 다운로드 가이드 탑재
 
 ### 1. 크롬 익스텐션 (Chrome Extension)
+*   **설정 페이지 내 로컬 서버 다운로드 및 실행 가이드 추가**
+    *   `extension/options/options.html`과 `options.css`를 업데이트하여, 사용자가 익스텐션을 사용할 때 로컬에서도 손쉽게 구동할 수 있도록 원격 깃허브 저장소의 ZIP 파일 다운로드 링크 및 3단계 구동 가이드를 고품격 UI로 추가.
 *   **원격 서버 IP 동적 설정 입력창 추가**
     *   `extension/options/options.html`, `options.js` 설정을 수정하여 원격 서버 IP를 코드 수정 없이 옵션 UI에서 직접 입력해 동적으로 변경할 수 있도록 원격 IP 입력 폼 구현.
     *   `extension/content/api.js`의 `getBaseURL()` 함수가 브라우저에 저장된 동적 IP 설정을 실시간 참조하여 연결할 수 있도록 수정.
@@ -16,6 +18,7 @@
 *   **CORS 및 콘텐츠 스크립트 로드 오류 조치**
     *   `manifest.json` 내 일반 웹페이지 매칭 스크립트 목록에 `content/api.js` 유틸이 누락되어 `getBaseURL()` 호출 시 ReferenceError가 나던 문제 해결.
     *   `backend/app/main.py` 내의 CORS 설정을 업데이트하여 일반 웹사이트 Origin(예: `https?://.*`)에서 백엔드 로컬 API로의 비동기 fetch를 허용하도록 `allow_origin_regex` 정규식 확장 조치.
+
 
 ### 2. FastAPI 백엔드 서버 (FastAPI Backend Server)
 *   **Gemini 3.1 Flash Lite GA 모델 업데이트**

@@ -47,6 +47,44 @@
             </div>
         </main>
 
+        <main class="settings-card guide-card">
+            <div class="section-title">
+                <h2>로컬 서버 설치 및 구동 방법</h2>
+                <p>로컬 컴퓨터에서 보안 판정 및 AI 분석 서버를 직접 실행할 수 있습니다.</p>
+            </div>
+            
+            <div class="guide-steps">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <span class="step-title">로컬 서버 프로그램 다운로드</span>
+                        <p class="step-desc">아래 버튼을 눌러 로컬 서버 구동용 소스코드를 다운로드하고 압축을 풉니다.</p>
+                        <a href="https://github.com/molegit9/Proto/archive/refs/heads/master.zip" class="download-btn" target="_blank">
+                            <span class="btn-icon">📥</span> 로컬 서버 (ZIP) 다운로드
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <span class="step-title">서버 실행 프로그램 실행</span>
+                        <p class="step-desc">압축을 푼 폴더의 <code>backend/start_server.bat</code> 파일을 더블 클릭하여 실행합니다.</p>
+                        <span class="step-tip">💡 Python 3.9 이상 환경이 필요하며, 최초 실행 시 필요한 패키지가 자동으로 설치됩니다.</span>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <span class="step-title">로컬 모드로 전환</span>
+                        <p class="step-desc">위의 설정에서 <strong>로컬 / 원격 서버 전환</strong> 토글을 해제(비활성화)하면 <code>localhost:8000</code>으로 자동 연결됩니다.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
         <footer class="footer">
             <p>&copy; 2026 웹보안관. All rights reserved.</p>
         </footer>
