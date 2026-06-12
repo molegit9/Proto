@@ -40,10 +40,25 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr "IPv4"') do (
 )
 echo ===================================================
 
-REM 4. Run uvicorn server directly in the console with unbuffered Python output (-u flag)
-echo [INFO] Starting uvicorn server host 0.0.0.0, port 8000...
-echo [INFO] Press Ctrl+C to terminate.
-"!PYTHON_EXE!" -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+REM 4. Choose whether to enable Remote Tunneling (Localtunnel)
+set "ENABLE_LT=n"
+set /p "ENABLE_LT=Enable Remote Tunneling (Localtunnel) for Remote Demo? [y/n] (Default: n): "
+
+if /i "!ENABLE_LT!"=="y" (
+    echo [INFO] Starting uvicorn server in a new window...
+    start "웹보안관 백엔드 서버" "!PYTHON_EXE!" -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+    
+    echo ===================================================
+    echo   Starting Localtunnel...
+    echo   Please copy the URL shown below and paste it
+    echo   into your extension options page.
+    echo ===================================================
+    call npx localtunnel --port 8000
+) else (
+    echo [INFO] Starting uvicorn server directly in this window...
+    echo [INFO] Press Ctrl+C to terminate.
+    "!PYTHON_EXE!" -u -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+)
 
 
 echo ===================================================
