@@ -51,7 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const targetIp = ip || defaultIp;
         if (useRemote) {
             statusDesc.innerText = "원격 API 서버(SERVER)를 사용합니다.";
-            apiEndpoint.innerText = `http://${targetIp}:8000`;
+            if (targetIp.startsWith("http://") || targetIp.startsWith("https://")) {
+                apiEndpoint.innerText = targetIp;
+            } else if (targetIp.includes(".") && !/^[0-9.]+$/.test(targetIp)) {
+                apiEndpoint.innerText = `https://${targetIp}`;
+            } else {
+                apiEndpoint.innerText = `http://${targetIp}:8000`;
+            }
         } else {
             statusDesc.innerText = "로컬 개발용 API 서버(localhost)를 사용합니다.";
             apiEndpoint.innerText = "http://localhost:8000";

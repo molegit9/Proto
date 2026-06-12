@@ -10,7 +10,14 @@ async function getBaseURL() {
           resolve("http://localhost:8000");
         } else {
           const remoteIp = result.remoteServerIp || REMOTE_SERVER_IP;
-          resolve(`http://${remoteIp}:8000`);
+          if (remoteIp.startsWith("http://") || remoteIp.startsWith("https://")) {
+            resolve(remoteIp);
+          } else if (remoteIp.includes(".") && !/^[0-9.]+$/.test(remoteIp)) {
+            // 도메인 주소(예: localtunnel, ngrok 등)인 경우 기본적으로 https://를 붙여줌
+            resolve(`https://${remoteIp}`);
+          } else {
+            resolve(`http://${remoteIp}:8000`);
+          }
         }
       });
     } else {
