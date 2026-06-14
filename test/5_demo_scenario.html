@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <title>시연</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Malgun Gothic', sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 40px;
+    }
+
+    .section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #555;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #222;
+    }
+
+    .link-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .link-card:hover {
+      border-color: #444;
+    }
+
+    .scenario-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-safe {
+      background: #1b4332;
+      color: #4ade80;
+    }
+
+    .badge-url {
+      background: #450a0a;
+      color: #f87171;
+    }
+
+    .badge-text {
+      background: #2e1065;
+      color: #c084fc;
+    }
+
+    .badge-dynamic {
+      background: #431407;
+      color: #fb923c;
+    }
+
+    .link-info {
+      flex: 1;
+    }
+
+    .link-info .name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .link-info .desc {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .link-url {
+      font-size: 12px;
+      color: #3b82f6;
+      text-decoration: none;
+      font-family: monospace;
+      word-break: break-all;
+    }
+
+    .link-url:hover {
+      color: #60a5fa;
+      text-decoration: underline;
+    }
+
+    .text-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 10px;
+    }
+
+    .text-card .name {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .text-content {
+      font-size: 14px;
+      color: #ccc;
+      line-height: 1.6;
+      padding: 12px;
+      background: #222;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      cursor: text;
+    }
+
+    .arrow {
+      color: #333;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>스프링트1 시연</h1>
+  <p class="subtitle">호버링 및 드래깅</p>
+
+  <div class="section">
+    <div class="section-title">1. 호버링(Hovering) 테스트</div>
+
+    <div class="link-card">
+      <span class="scenario-badge badge-safe">🟢 정상</span>
+      <div class="link-info">
+        <div class="name">github.com — 정상 사이트</div>
+        <div class="desc">SAFE 판정 기준선</div>
+        <a class="link-url" href="https://github.com">
+          https://github.com
+        </a>
+      </div>
+      <span class="arrow">→</span>
+    </div>
+
+    <div class="link-card">
+      <span class="scenario-badge badge-safe">🟢 정상</span>
+      <div class="link-info">
+        <div class="name">충남대학교— 정상 사이트</div>
+        <div class="desc">SAFE 판정 기준선</div>
+        <a class="link-url" href="https://plus.cnu.ac.kr/">
+          https://plus.cnu.ac.kr/
+        </a>
+      </div>
+      <span class="arrow">→</span>
+    </div>
+
+    <div class="link-card">
+      <span class="scenario-badge badge-url">🔴 위험 링크</span>
+      <div class="link-info">
+        <div class="name">위험 — 구글 테스트 사이트</div>
+        <div class="desc">VirusTotal 등에서 악성으로 탐지됨</div>
+        <a class="link-url" href="https://testsafebrowsing.appspot.com/s/phishing.html">
+          https://testsafebrowsing.appspot.com/s/phishing.html
+        </a>
+      </div>
+      <span class="arrow">→</span>
+    </div>
+
+    <div class="link-card">
+      <span class="scenario-badge badge-url">⚫ 엉터리 링크</span>
+      <div class="link-info">
+        <div class="name">블랙홀 — 존재하지 않는 사이트</div>
+        <div class="desc">에러 발생 시 로깅 동작 확인용</div>
+        <a class="link-url" href="http://10.255.255.255:9999/blackhole.html">
+          http://10.255.255.255:9999/blackhole.html
+        </a>
+      </div>
+      <span class="arrow">→</span>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <div class="section-title">2. 드래깅(Dragging) 테스트</div>
+
+    <div class="text-card">
+      <div class="name"><span class="scenario-badge badge-safe">🟢 정상</span> 일반 텍스트</div>
+      <div class="desc" style="font-size: 12px; color: #666; margin-bottom: 8px;">안전한 일상적인 대화 텍스트</div>
+      <div class="text-content">안녕하세요. 오늘 날씨가 참 좋네요. 항상 건강 유의하시고 좋은 하루 보내세요.</div>
+    </div>
+
+    <div class="text-card">
+      <div class="name"><span class="scenario-badge badge-text">🔴 위험</span> 피싱/스미싱 텍스트 (코인원 사칭)</div>
+      <div class="desc" style="font-size: 12px; color: #666; margin-bottom: 8px;">실제 데이터셋 기반 코인원 사칭 스미싱 텍스트</div>
+      <div class="text-content">[국외발신]
+        [코인원]
+        고객님계정이
+        해외IP에서
+        로그인되였습니다.해외IP차단해주세요.
+        www.coinonve.com</div>
+    </div>
+
+    <div class="text-card">
+      <div class="name"><span class="scenario-badge badge-text">🔴 위험</span> 피싱/스미싱 텍스트 (업비트 사칭)</div>
+      <div class="desc" style="font-size: 12px; color: #666; margin-bottom: 8px;">업비트 거래소 사칭 비정상 출금 유도 피싱 텍스트</div>
+      <div class="text-content">[국제발신]
+[업비트]
+고객님의 계정에서 비정상적인 출금 요청(1.5 BTC)이 감지되었습니다.
+본인이 아닐 경우 즉시 출금 취소 및 보호 조치 바랍니다.
+https://upbit-secures.com</div>
+    </div>
+
+    <div class="text-card">
+      <div class="name"><span class="scenario-badge badge-safe">⚪ 예외</span> 10자 미만 텍스트</div>
+      <div class="desc" style="font-size: 12px; color: #666; margin-bottom: 8px;">너무 짧은 텍스트는 분석을 무시하거나 즉시 리턴함 (9글자)
+      </div>
+      <div class="text-content">짧은 텍스트 테스트</div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>
