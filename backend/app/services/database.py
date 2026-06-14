@@ -79,6 +79,19 @@ def get_cached_analysis(content: str):
             return {"status": row[0], "reason": row[1]}
     return None
 
+def get_cached_email_analysis(message_id: str):
+    with get_db() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            '''SELECT raw_data FROM email_logs WHERE message_id = ? ORDER BY timestamp DESC LIMIT 1''',
+            (message_id,)
+        )
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+    return None
+
 def log_email_analysis(
     message_id: str, sender: str, subject: str,
     is_phishing: bool, risk_level: str, summary: str,

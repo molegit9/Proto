@@ -3,7 +3,19 @@ from playwright.async_api import Playwright, TimeoutError
 import tldextract
 
 MAX_CONCURRENT_BROWSERS = 2
-browser_semaphore = asyncio.Semaphore(MAX_CONCURRENT_BROWSERS)
+
+# Loop-specific semaphores to prevent cross-loop/cross-thread asyncio errors
+_loop_semaphores = {}
+
+def get_browser_semaphore():
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.Semaphore(MAX_CONCURRENT_BROWSERS)
+        
+    if loop not in _loop_semaphores:
+        _loop_semaphores[loop] = asyncio.Semaphore(MAX_CONCURRENT_BROWSERS)
+    return _loop_semaphores[loop]
 
 async def inspect_url_with_playwright(playwright: Playwright, url: str) -> dict:
     """Tier 2: Playwright 기반 동적 DOM 분석"""
@@ -34,7 +46,8 @@ async def inspect_url_with_playwright(playwright: Playwright, url: str) -> dict:
     context = None
     page = None
     
-    async with browser_semaphore:
+    sem = get_browser_semaphore()
+    async with sem:
         try:
             browser = await playwright.chromium.launch(headless=True)
             
@@ -88,8 +101,8 @@ async def inspect_url_with_playwright(playwright: Playwright, url: str) -> dict:
                     
             page.on("response", on_response)
             
-            # 최대 5초 타임아웃
-            response = await page.goto(url, timeout=5000, wait_until="domcontentloaded")
+            # 최대 15초 타임아웃
+            response = await page.goto(url, timeout=15000, wait_until="domcontentloaded")
             
             if response:
                 result["final_url"] = page.url
@@ -147,7 +160,7 @@ async def inspect_url_with_playwright(playwright: Playwright, url: str) -> dict:
                     pass
     
         except TimeoutError:
-            result["error"] = "Timeout exceeded (5s)"
+            result["error"] = "Timeout exceeded (15s)"
             result["error_type"] = "timeout"
         except Exception as e:
             error_str = str(e).lower()

@@ -30,15 +30,33 @@ def should_escalate_to_browser_analysis(url: str, vt_stats: dict, static_result:
     public_hosting_domains = ["github.io", "vercel.app", "netlify.app"]
     parsed = urllib.parse.urlparse(url)
     domain = parsed.netloc.lower()
-    if any(domain == ph or domain.endswith("." + ph) for ph in public_hosting_domains):
+    is_pub_hosting = any(domain == ph or domain.endswith("." + ph) for ph in public_hosting_domains)
+    if is_pub_hosting:
         return True
-    # 2. VirusTotal 악성 결과 (명확한 스키마 stats 기준)
+
+    # 2. VirusTotal 검증 확인 (이미 안전한 기등록 페이지인지 스킵 검증)
+    # 바이러스토탈 분석 엔진 기록이 존재하고 악성/의심 건수가 0인 공인된 안전한 사이트는 동적 검사 스킵!
+    is_vt_verified_safe = False
+    if vt_stats:
+        malicious = vt_stats.get("malicious", 0)
+        suspicious = vt_stats.get("suspicious", 0)
+        harmless = vt_stats.get("harmless", 0)
+        undetected = vt_stats.get("undetected", 0)
+        total_engines = malicious + suspicious + harmless + undetected
+        
+        if total_engines >= 5 and malicious == 0 and suspicious == 0:
+            is_vt_verified_safe = True
+
+    if is_vt_verified_safe:
+        return False
+
+    # 3. VirusTotal 악성 결과 (명확한 스키마 stats 기준)
     if vt_stats.get("malicious", 0) > 0 or vt_stats.get("suspicious", 0) > 0: return True
-    # 3. 정적 분석에서 리다이렉션 또는 로그인 폼 감지
+    # 4. 정적 분석에서 리다이렉션 또는 로그인 폼 감지
     if static_result.get("is_redirected") or static_result.get("has_password_field") or static_result.get("has_login_form"): return True
-    # 4. LLM 1차 판단이 HIGH인 경우에만 단독 동적 분석 수행
+    # 5. LLM 1차 판단이 HIGH인 경우에만 단독 동적 분석 수행
     if llm_phase1_risk == "HIGH": return True
-    # 5. 도메인이 불일치하고 + 1차 AI 리스크가 MEDIUM 이상인 복합 조건일 때만 동적 분석 수행
+    # 6. 도메인이 불일치하고 + 1차 AI 리스크가 MEDIUM 이상인 복합 조건일 때만 동적 분석 수행
     if check_domain_mismatch(url, sender_domain) and llm_phase1_risk in ["MEDIUM", "HIGH"]: return True
         
     return False

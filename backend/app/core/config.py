@@ -6,6 +6,10 @@ class Settings(BaseSettings):
     GMAIL_CREDENTIALS_PATH: str = ""
     DATABASE_URL: str = "sqlite:///./security_logs.db"
     RAG_DATASET_PATH: str = "./data/merged_security_dataset.csv"
+    RAG_DATASET_PATHS: list[str] = [
+        "./data/merged_security_dataset.csv",
+        "./data/phishing_dataset.csv"
+    ]
     CHROMA_DB_PATH: str = "./chroma_db"
 
     class Config:

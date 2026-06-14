@@ -10,23 +10,65 @@ collection = None
 def init_vector_db(csv_path: str = None, sample_size: int = 10000):
     global collection
     
-    if csv_path is None:
-        csv_path = settings.RAG_DATASET_PATH
-        
     db_path = settings.CHROMA_DB_PATH
 
-    if not os.path.exists(csv_path):
-        print(f"Error: {csv_path} not found. Skipping vector DB init.")
+    # Determine which CSV files to load
+    csv_paths = []
+    if csv_path is not None:
+        csv_paths = [csv_path]
+    else:
+        if hasattr(settings, "RAG_DATASET_PATHS") and settings.RAG_DATASET_PATHS:
+            csv_paths = settings.RAG_DATASET_PATHS
+        else:
+            csv_paths = [settings.RAG_DATASET_PATH]
+
+    # Filter out non-existent files
+    valid_csv_paths = [path for path in csv_paths if os.path.exists(path)]
+    if not valid_csv_paths:
+        print(f"Error: No valid datasets found in {csv_paths}. Skipping vector DB init.")
         return
 
-    print(f"[1/4] Loading dataset from {csv_path}...")
+    print(f"[1/4] Loading datasets from {valid_csv_paths}...")
     try:
-        df = pd.read_csv(csv_path).dropna(subset=['content'])
-        print(f"[Info] Total loaded rows: {len(df)}")
+        dfs = []
+        for path in valid_csv_paths:
+            df_temp = pd.read_csv(path)
+            
+            # Standardize columns:
+            # We map 'text' -> 'content', 'phishing_type' -> 'source'
+            if 'content' not in df_temp.columns and 'text' in df_temp.columns:
+                df_temp = df_temp.rename(columns={'text': 'content'})
+            
+            if 'source' not in df_temp.columns and 'phishing_type' in df_temp.columns:
+                df_temp = df_temp.rename(columns={'phishing_type': 'source'})
+            elif 'source' not in df_temp.columns:
+                df_temp['source'] = os.path.basename(path)
+            
+            # Drop null content
+            df_temp = df_temp.dropna(subset=['content'])
+            dfs.append(df_temp)
+            print(f"[Info] Loaded {len(df_temp)} rows from {path}")
 
+        if not dfs:
+            print("Error: No data loaded. Skipping vector DB init.")
+            return
+
+        # Concatenate and reset index to ensure unique sequential index
+        df = pd.concat(dfs, ignore_index=True)
+        print(f"[Info] Total combined rows: {len(df)}")
+
+        # Stratified sampling across label and source to ensure fair representation
         if len(df) > sample_size:
-            print(f"[Info] To prevent hours of indexing, drawing a stratified sample of {sample_size} records...")
-            df = df.groupby('label', group_keys=False).apply(lambda x: x.sample(min(len(x), sample_size // 5), random_state=42))
+            print(f"[Info] Drawing a stratified sample of {sample_size} records...")
+            groups = df.groupby(['label', 'source'])
+            num_groups = groups.ngroups
+            samples_per_group = max(1, sample_size // num_groups)
+            
+            sampled_indices = []
+            for _, group in groups:
+                sampled_indices.extend(group.sample(min(len(group), samples_per_group), random_state=42).index)
+                
+            df = df.loc[sampled_indices].reset_index(drop=True)
             print(f"[Info] Final sample size: {len(df)}")
 
         print("[2/4] Initializing Korean Embedding Model and ChromaDB...")
@@ -35,11 +77,33 @@ def init_vector_db(csv_path: str = None, sample_size: int = 10000):
         client = chromadb.PersistentClient(path=db_path)
         collection = client.get_or_create_collection(name="security_texts", embedding_function=emb_fn)
 
-        # 이미 데이터가 들어가 있다면 벡터화 과정을 건너뜀 (서버 재시작 속도 대폭 향상)
+        # Check if database has already been initialized
+        is_initialized = False
         if collection.count() > 0:
+            if csv_path is not None:
+                # If specific path was provided (e.g. for testing), assume initialized
+                is_initialized = True
+            else:
+                # Default behavior: verify if the new dataset (which has label "0") is indexed
+                try:
+                    res = collection.get(where={"label": "0"}, limit=1)
+                    if res and res.get("ids"):
+                        is_initialized = True
+                except Exception as e:
+                    print(f"[Warning] Failed to verify DB contents: {e}")
+
+        if is_initialized:
             print(f"[3/4] Database already initialized! Skipping embedding. (Count: {collection.count()})")
             print(f"[4/4] Vector Database successfully loaded at {db_path}")
             return
+
+        # If not fully initialized with the new dataset, recreate/clear the collection
+        print("[Info] Re-initializing vector database to include all datasets...")
+        try:
+            client.delete_collection(name="security_texts")
+        except Exception:
+            pass
+        collection = client.get_or_create_collection(name="security_texts", embedding_function=emb_fn)
 
         print("[3/4] Vectorizing texts into the database (this might take a few minutes)...")
         batch_size = 500
@@ -51,7 +115,20 @@ def init_vector_db(csv_path: str = None, sample_size: int = 10000):
                 break
             
             documents = batch_df['content'].astype(str).tolist()
-            metadatas = [{"label": str(row['label']), "source": str(row.get('source', 'unknown'))} for _, row in batch_df.iterrows()]
+            
+            # Populate metadata dict with optional severity & confidence fields
+            metadatas = []
+            for _, row in batch_df.iterrows():
+                meta = {
+                    "label": str(row['label']),
+                    "source": str(row.get('source', 'unknown')),
+                }
+                if 'severity' in row and pd.notna(row['severity']):
+                    meta['severity'] = str(row['severity'])
+                if 'confidence' in row and pd.notna(row['confidence']):
+                    meta['confidence'] = str(row['confidence'])
+                metadatas.append(meta)
+                
             ids = [f"doc_{idx}" for idx in batch_df.index]
             
             collection.upsert(

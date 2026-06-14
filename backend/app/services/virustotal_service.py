@@ -26,16 +26,11 @@ async def check_url_virustotal(url: str) -> Optional[dict]:
                 malicious = stats.get("malicious", 0)
                 suspicious = stats.get("suspicious", 0)
                 
-                if malicious > 0 or suspicious > 0:
-                    return {
-                        "status": "VT_DANGER",
-                        "reason": f"VirusTotal의 {malicious + suspicious}개 엔진에서 이 링크를 위험요소로 감지했습니다."
-                    }
-                else:
-                    return {
-                        "status": "VT_SAFE",
-                        "reason": "전문 보안 엔진(VirusTotal) 검사 결과, 이 링크는 안전한 것으로 확인되었습니다."
-                    }
+                return {
+                    "status": "VT_DANGER" if (malicious > 0 or suspicious > 0) else "VT_SAFE",
+                    "reason": f"VirusTotal의 {malicious + suspicious}개 엔진에서 이 링크를 위험요소로 감지했습니다." if (malicious > 0 or suspicious > 0) else "전문 보안 엔진(VirusTotal) 검사 결과, 이 링크는 안전한 것으로 확인되었습니다.",
+                    "stats": stats
+                }
             elif response.status_code == 404:
                 # Not found in VT database
                 return None
@@ -79,7 +74,8 @@ async def inspect_links_with_virustotal(urls: List[str]) -> dict:
         results["details"].append({
             "url": url, 
             "malicious": is_malicious, 
-            "note": vt_resp.get("reason", "")
+            "note": vt_resp.get("reason", ""),
+            "stats": vt_resp.get("stats", {})
         })
                 
     return results
