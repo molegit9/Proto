@@ -66,6 +66,56 @@ function initUrlAnalysis() {
 
   let hoverTimer;
   let currentTooltip = null;
+  let activeStreamPort = null;
+
+  function disconnectActiveStream() {
+      if (activeStreamPort) {
+          try {
+              activeStreamPort.disconnect();
+          } catch (_) {}
+          activeStreamPort = null;
+      }
+  }
+
+  /**
+   * Background Service Worker를 통해 NDJSON 스트리밍 API를 호출합니다.
+   * (Chrome 142+ Local Network Access / Content Script CORS 차단 회피)
+   */
+  function startBackgroundStream(action, payload, { onChunk, onError, onDone }) {
+      disconnectActiveStream();
+
+      const port = chrome.runtime.connect({ name: "phishing-stream" });
+      activeStreamPort = port;
+      let finished = false;
+
+      port.onMessage.addListener((msg) => {
+          if (activeStreamPort !== port) return;
+
+          if (msg.type === "chunk") {
+              if (onChunk) onChunk(msg.data);
+          } else if (msg.type === "error") {
+              finished = true;
+              if (onError) onError(msg.message);
+              disconnectActiveStream();
+          } else if (msg.type === "done") {
+              finished = true;
+              if (onDone) onDone();
+              disconnectActiveStream();
+          }
+      });
+
+      port.onDisconnect.addListener(() => {
+          if (activeStreamPort === port) {
+              activeStreamPort = null;
+          }
+          if (!finished && chrome.runtime.lastError && onError) {
+              onError("백그라운드 서비스 연결이 끊어졌습니다.");
+          }
+      });
+
+      port.postMessage({ action, payload });
+      return port;
+  }
 
   function showSafetyTooltip(x, y, safetyScore, reason) {
       console.log(`[Phishing Detector] 툴팁 표시 시도 - 점수: ${safetyScore}, 이유: ${reason}`);
@@ -137,72 +187,48 @@ function initUrlAnalysis() {
       console.log(`[Phishing Detector] 링크 호버 감지됨: ${url}`);
 
       // 0.5초간 마우스가 머물면 의도(Hover)로 파악하고 즉시 검사 시작
-      hoverTimer = setTimeout(async () => {
+      hoverTimer = setTimeout(() => {
           try {
               const domain = new URL(url).hostname;
-              console.log(`[Phishing Detector] 호버 시간 유지! 서버 검사 요청 시작... (도메인: ${domain})`);
+              console.log(`[Phishing Detector] 호버 시간 유지! Background 경유 서버 검사 요청 시작... (도메인: ${domain})`);
               
               // 1. 순식간에 끝나는 로컬 연산
               const brandData = checkLevenshtein(domain);
               console.log(`[Phishing Detector] 로컬 사칭 탐지 결과:`, brandData);
               
-              // 2. 백엔드(FastAPI)로 검사 요청 (Gemini + RDAP 병렬)
-              const baseURL = await getBaseURL();
-              console.log(`[Phishing Detector] 서버 API 호출 중... (${baseURL})`);
-              const response = await fetch(`${baseURL}/api/v1/analyze`, {
-                  method: 'POST',
-                  headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({
+              // 2. Background Service Worker를 통해 백엔드(FastAPI)로 스트리밍 요청
+              startBackgroundStream(
+                  "ANALYZE_URL",
+                  {
                       url: url,
                       is_spoofed: brandData.spoofed,
                       target_brand: brandData.brand,
                       is_exact_match: brandData.exact_match,
                       enable_deep_scan: enableDeepScan
-                  })
-              });
-              
-              console.log(`[Phishing Detector] HTTP 서버 응답 상태: ${response.status}`);
-              
-              if (!response.ok) {
-                  throw new Error(`서버 에러 상태코드: ${response.status}`);
-              }
-
-              const reader = response.body.getReader();
-              const decoder = new TextDecoder();
-              let buffer = '';
-
-              while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  
-                  buffer += decoder.decode(value, { stream: true });
-                  const parts = buffer.split('\n');
-                  buffer = parts.pop(); // 마지막 불완전한 조각 저장
-
-                  for (const part of parts) {
-                      if (!part.trim()) continue;
-                      try {
-                          const result = JSON.parse(part);
-                          
+                  },
+                  {
+                      onChunk: (result) => {
                           if (result.progress) {
                               if (showProgress) {
                                   showProgressTooltip(e.pageX, e.pageY, result.progress);
                               }
                           } else if (result.status === 'success') {
-                              const data = JSON.parse(result.data);
+                              const data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
                               showSafetyTooltip(e.pageX, e.pageY, data.safety_score, data.reason);
                           } else if (result.status === 'error') {
                               console.error("[Phishing Detector] 백엔드 분석 실패 원인:", result.message);
                               showSafetyTooltip(e.pageX, e.pageY, 50, `분석 실패: ${result.message}`);
                           }
-                      } catch (parseError) {
-                          console.error("NDJSON 파싱 에러:", parseError, part);
+                      },
+                      onError: (errorMsg) => {
+                          console.error('[Phishing Detector] API 연결 또는 파싱 에러 (서버 켜져있나요?)', errorMsg);
+                          showSafetyTooltip(e.pageX, e.pageY, 50, "서버와 통신할 수 없습니다. 서버가 켜져있는지 확인해주세요.");
                       }
                   }
-              }
+              );
           } catch (err) {
-              console.error('[Phishing Detector] API 연결 또는 파싱 에러 (서버 켜져있나요?)', err);
-              showSafetyTooltip(e.pageX, e.pageY, 50, "서버와 통신할 수 없습니다. 서버가 켜져있는지 확인해주세요.");
+              console.error('[Phishing Detector] 호버 분석 초기화 에러:', err);
+              showSafetyTooltip(e.pageX, e.pageY, 50, "URL 분석 요청 중 오류가 발생했습니다.");
           }
       }, 500); 
   });
@@ -212,6 +238,7 @@ function initUrlAnalysis() {
       if (!link) return;
       
       clearTimeout(hoverTimer);
+      disconnectActiveStream();
       // 호버에서 마우스가 빠졌을 때, 드래그 상태가 아니면 툴팁을 지운다.
       const selectedText = window.getSelection().toString().trim();
       if (selectedText.length === 0) removeTooltip();
@@ -238,62 +265,36 @@ function initUrlAnalysis() {
       if (selectedText.length >= 10 && selectedText.length <= 500) {
           console.log(`[Phishing Detector] 텍스트 드래그 감지됨: "${selectedText}"`);
           
-          try {
-              // 임시 툴팁 생성
-              if (showProgress) {
-                  showSafetyTooltip(e.pageX, e.pageY, 50, "분석 서버 연결 중... 🔄");
-                  if (currentTooltip) currentTooltip.classList.remove('safe', 'danger', 'warning');
-              }
-              
-              const baseURL = await getBaseURL();
-              const response = await fetch(`${baseURL}/api/v1/analyze/text`, {
-                  method: 'POST',
-                  headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({
-                      selected_text: selectedText
-                  })
-              });
-              
-              if (!response.ok) throw new Error("서버 연동 에러");
-              
-              const reader = response.body.getReader();
-              const decoder = new TextDecoder();
-              let buffer = '';
-
-              while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-                  
-                  buffer += decoder.decode(value, { stream: true });
-                  const parts = buffer.split('\n');
-                  buffer = parts.pop();
-
-                  for (const part of parts) {
-                      if (!part.trim()) continue;
-                      try {
-                          const result = JSON.parse(part);
-                          
-                          if (result.progress) {
-                              if (showProgress) {
-                                  showProgressTooltip(e.pageX, e.pageY, result.progress);
-                              }
-                          } else if (result && result.score !== undefined) {
-                              // UI는 100점이 '안전'이므로 점수를 뒤집어서 전달 (100 - score)
-                              const safetyScore = 100 - result.score;
-                              showSafetyTooltip(e.pageX, e.pageY, safetyScore, result.reason + "<br>🛡️ 제안: " + (result.mitigation || ""));
-                          } else if (result.risk_level === "에러" || result.risk_level === "시스템 오류") {
-                              console.error("[Phishing Detector] 드래그 분석 에러:", result);
-                              showSafetyTooltip(e.pageX, e.pageY, 50, `분석 에러: ${result.reason}`);
+          // 임시 툴팁 생성
+          if (showProgress) {
+              showSafetyTooltip(e.pageX, e.pageY, 50, "분석 서버 연결 중... 🔄");
+              if (currentTooltip) currentTooltip.classList.remove('safe', 'danger', 'warning');
+          }
+          
+          startBackgroundStream(
+              "ANALYZE_TEXT",
+              { selected_text: selectedText },
+              {
+                  onChunk: (result) => {
+                      if (result.progress) {
+                          if (showProgress) {
+                              showProgressTooltip(e.pageX, e.pageY, result.progress);
                           }
-                      } catch (parseError) {
-                          console.error("NDJSON 파싱 에러:", parseError, part);
+                      } else if (result && result.score !== undefined) {
+                          // UI는 100점이 '안전'이므로 점수를 뒤집어서 전달 (100 - score)
+                          const safetyScore = 100 - result.score;
+                          showSafetyTooltip(e.pageX, e.pageY, safetyScore, result.reason + "<br>🛡️ 제안: " + (result.mitigation || ""));
+                      } else if (result.risk_level === "에러" || result.risk_level === "시스템 오류") {
+                          console.error("[Phishing Detector] 드래그 분석 에러:", result);
+                          showSafetyTooltip(e.pageX, e.pageY, 50, `분석 에러: ${result.reason}`);
                       }
+                  },
+                  onError: (errMsg) => {
+                      console.error('[Phishing Detector] 드래그 분석 API 연동 실패', errMsg);
+                      showSafetyTooltip(e.pageX, e.pageY, 50, "서버와 통신할 수 없습니다. (API 연동 실패)");
                   }
               }
-          } catch (err) {
-              console.error('[Phishing Detector] 드래그 분석 API 연동 실패', err);
-              showSafetyTooltip(e.pageX, e.pageY, 50, "서버와 통신할 수 없습니다. (API 연동 실패)");
-          }
+          );
       }
   });
 

@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Settings (Clear DB)
+    // 3. Settings (Clear DB) - Service Worker 경유
     document.getElementById('clearBtn').addEventListener('click', async () => {
         const btn = document.getElementById('clearBtn');
         const msg = document.getElementById('statusMsg');
@@ -69,48 +69,50 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = true;
         btn.innerText = "서버 통신 중...";
         
-        try {
-            const baseURL = await getBaseURL();
-            const response = await fetch(`${baseURL}/api/clear-db`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'}
-            });
-            
-            if (response.ok) {
+        chrome.runtime.sendMessage({ action: "CLEAR_DB" }, (response) => {
+            if (!chrome.runtime.lastError && response && response.success) {
                 btn.style.display = 'none';
                 msg.style.display = 'block';
                 setTimeout(() => { window.close(); }, 1500); 
             } else {
-                alert('서버 에러가 발생했습니다. 백엔드 동작 여부를 확인하세요.');
+                alert('백엔드 서버에 연결할 수 없거나 에러가 발생했습니다. 서버 동작 여부를 확인하세요.');
                 btn.disabled = false;
                 btn.innerText = "데이터베이스(DB) 초기화";
             }
-        } catch (e) {
-            alert('백엔드 서버에 연결할 수 없습니다. 서버가 켜져있는지 확인하세요.');
-            btn.disabled = false;
-            btn.innerText = "데이터베이스(DB) 초기화";
-        }
+        });
     });
 
-    // 4. Load Logs
+    // 4. Load Logs - Service Worker 경유
     async function loadLogs() {
         const container = document.getElementById('logs-container');
-        container.innerHTML = '<div id="logs-loading">기록을 불러오는 중...</div>';
+        container.textContent = '';
+        const loadingEl = document.createElement('div');
+        loadingEl.id = 'logs-loading';
+        loadingEl.textContent = '기록을 불러오는 중...';
+        container.appendChild(loadingEl);
         
-        try {
-            const baseURL = await getBaseURL();
-            const response = await fetch(`${baseURL}/api/logs?limit=20`);
-            if (!response.ok) throw new Error('Failed to load logs');
-            
-            const data = await response.json();
-            const logs = data.logs;
-            
-            if (!logs || logs.length === 0) {
-                container.innerHTML = '<div id="logs-loading">최근 분석 기록이 없습니다.</div>';
+        chrome.runtime.sendMessage({ action: "GET_LOGS", limit: 20 }, (response) => {
+            if (chrome.runtime.lastError || !response || !response.success) {
+                console.error('Failed to load logs:', chrome.runtime.lastError || (response && response.error));
+                container.textContent = '';
+                const errEl = document.createElement('div');
+                errEl.id = 'logs-error';
+                errEl.textContent = '서버와 통신할 수 없습니다.';
+                container.appendChild(errEl);
                 return;
             }
 
-            container.innerHTML = '';
+            const logs = response.data && response.data.logs;
+            container.textContent = '';
+            
+            if (!logs || logs.length === 0) {
+                const emptyEl = document.createElement('div');
+                emptyEl.id = 'logs-loading';
+                emptyEl.textContent = '최근 분석 기록이 없습니다.';
+                container.appendChild(emptyEl);
+                return;
+            }
+
             logs.forEach(log => {
                 const isEmail = log.type === 'email';
                 const icon = isEmail ? '📧' : '🔗';
@@ -154,20 +156,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const item = document.createElement('div');
                 item.className = 'log-item';
-                item.innerHTML = `
-                    <div class="log-header">
-                        <div class="log-title">${icon} <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${title}">${title}</span></div>
-                        <div class="log-badge ${badgeClass}">${badgeText}</div>
-                    </div>
-                    <div class="log-reason">${log.reason || '분석 요약 없음'}</div>
-                    <div class="log-time">${timeStr}</div>
-                `;
+
+                const header = document.createElement('div');
+                header.className = 'log-header';
+
+                const titleWrap = document.createElement('div');
+                titleWrap.className = 'log-title';
+                titleWrap.appendChild(document.createTextNode(`${icon} `));
+
+                const titleSpan = document.createElement('span');
+                titleSpan.style.cssText = 'white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;';
+                titleSpan.title = title;
+                titleSpan.textContent = title;
+                titleWrap.appendChild(titleSpan);
+
+                const badge = document.createElement('div');
+                badge.className = `log-badge ${badgeClass}`;
+                badge.textContent = badgeText;
+
+                header.appendChild(titleWrap);
+                header.appendChild(badge);
+
+                const reasonEl = document.createElement('div');
+                reasonEl.className = 'log-reason';
+                reasonEl.textContent = (log.reason || '분석 요약 없음').replace(/<[^>]*>/g, ' ');
+
+                const timeEl = document.createElement('div');
+                timeEl.className = 'log-time';
+                timeEl.textContent = timeStr;
+
+                item.appendChild(header);
+                item.appendChild(reasonEl);
+                item.appendChild(timeEl);
                 container.appendChild(item);
             });
-
-        } catch (error) {
-            console.error('Failed to load logs:', error);
-            container.innerHTML = '<div id="logs-error">서버와 통신할 수 없습니다.</div>';
-        }
+        });
     }
 });
