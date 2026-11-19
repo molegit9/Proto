@@ -446,5 +446,5 @@ function initUrlAnalysis() {
     );
   });
 
-  console.log("[Phishing Detector] v2.0 Shadow DOM + Service Worker Port + LocalAI 클라이언트 로드 완료");
+  console.log("[Phishing Detector] Shadow DOM + Service Worker Port + LocalAI 클라이언트 로드 완료");
 }

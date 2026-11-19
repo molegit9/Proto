@@ -1,11 +1,11 @@
-# 웹보안관 (WebSecurityGuard) v2.0
+# 웹보안관 (WebSecurityGuard)
 
 LLM, RAG, 가상 브라우저(Playwright)를 결합한 피싱 탐지 Chrome 확장프로그램입니다.  
 일반 웹페이지 링크 호버 검사, 의심 문구 드래그 검사, 위험 사이트 자동 차단, Gmail 메일 분석을 하나의 FastAPI 백엔드와 Chrome Extension(MV3)으로 처리합니다.
 
-> 현재 브랜치(`feat/chrome-modernization`)는 기존 v1.0에서 크롬 최신 정책(LNA/CORS), Side Panel, DNR 자동 차단, Playwright 풀링, 최신 Gemini 모델 및 속도 개선 작업을 반영한 버전입니다.
+> 현재 브랜치(`feat/chrome-modernization`)는 기존 버전에서 크롬 최신 정책(LNA/CORS), Side Panel, DNR 자동 차단, Playwright 풀링, 최신 Gemini 모델 및 속도 개선 작업을 반영한 버전입니다.
 
-시연 영상 (v1.0 기준):
+시연 영상:
 - https://youtu.be/SfNGCjKW3M0
 - https://youtu.be/S8i36zZRL7k
 

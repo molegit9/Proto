@@ -1,5 +1,5 @@
 /**
- * Gmail 보안 분석 배너 렌더러 (v2.0)
+ * Gmail 보안 분석 배너 렌더러
  * - Closed Shadow DOM으로 스타일 및 DOM 격리
  * - 모든 동적 문자열에 escapeHtml() 적용하여 XSS 원천 차단
  * - Chrome Side Panel 상세 대시보드 바로가기 버튼 제공

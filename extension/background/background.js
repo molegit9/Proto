@@ -1,7 +1,7 @@
 importScripts('/content/api.js');
 
 /**
- * Background Service Worker (v2.0)
+ * Background Service Worker
  * 1. Chrome 142+ Local Network Access(LNA) & CORS 회피용 백엔드 통신 프록시 (단발 + Port NDJSON 스트리밍)
  * 2. DeclarativeNetRequest(DNR) 기반 위험 URL 능동 차단 (세션 규칙 -> Interstitial 경고 페이지)
  * 3. Chrome Side Panel 상세 위협 대시보드 상태 동기화 및 열기 제어
