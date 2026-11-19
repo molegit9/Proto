@@ -20,6 +20,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.rag_service import init_vector_db
 from app.services.database import init_db
+from app.services.browser_analyzer import shutdown_browser_pool
+from app.services.http_client import close_http_client
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,7 +29,9 @@ async def lifespan(app: FastAPI):
     init_vector_db()
     init_db()
     yield
-    print("Shutdown: 시스템을 종료합니다.")
+    print("Shutdown: Playwright 브라우저 풀 및 HTTP 클라이언트를 종료합니다.")
+    await shutdown_browser_pool()
+    await close_http_client()
 
 from app.api.routes import router
 

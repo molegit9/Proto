@@ -11,6 +11,13 @@ class Settings(BaseSettings):
         "./data/phishing_dataset.csv"
     ]
     CHROMA_DB_PATH: str = "./chroma_db"
+    GEMINI_PRIMARY_MODEL: str = "gemini-3.5-flash-lite"
+    GEMINI_SECONDARY_MODEL: str = "gemini-3.1-flash-lite"
+    GEMINI_FALLBACK_MODEL: str = "gemma-4-31b-it"
+    GEMINI_SUMMARY_MODEL: str = "gemma-4-31b-it"
+    PLAYWRIGHT_USE_NEW_HEADLESS: bool = True
+    PLAYWRIGHT_CAPTURE_SCREENSHOT: bool = True
+    PLAYWRIGHT_MAX_CONCURRENT_CONTEXTS: int = 3
 
     class Config:
         env_file = ".env"

@@ -1,10 +1,79 @@
-# CHANGELOG (변경 이력)
+# CHANGELOG
 
-이 프로젝트의 기능 추가 및 시스템 변경 이력을 기록하는 문서입니다.
+프로젝트 작업 기록 및 변경 이력입니다.
 
 ---
 
-## 📅 [2026-06-12] 0612 추가사항 - Gemini GA 모델 업데이트, 익스텐션 원격 IP 동적 설정 & 배치 파일 최적화 & 로컬 서버 다운로드 가이드 탑재
+## [2026-11-15] 새 모델, 지메일 UI 버그 수정 및 속도 개선
+
+### 지메일 UI 및 성능 개선
+- Gmail에서 메일 검사 후 뒤로가기 눌렀을 때 받은편지함 아래쪽 절반이 잘려 보이던 문제 수정 (`gmail_banner.js`, `gmail_ui.js`)
+  - 컨테이너 못 찾을 때 `document.body.prepend()`로 들어가던 부분 제거하고, 실제로 보이는 메일 스레드 영역(`.nH.hx`)에만 삽입하도록 변경
+  - 뒤로가기 시 디바운스 기다리지 않고 바로 배너 삭제 후 `resize` 이벤트로 Gmail 리스트 높이 다시 잡도록 처리
+  - 이전 메일 요청 응답이 뒤늦게 도착해서 배너가 다시 뜨는 문제 막기 위해 요청 시퀀스 체크 추가
+- 메일 분석이 너무 오래 걸리던 병목 정리
+  - `link_sandbox.py`, `virustotal_service.py`: 쿠팡·네이버·구글·카드사 등 정상 도메인 링크까지 Playwright를 띄우던 문제 수정 (단축 URL이나 `github.io` 같은 퍼블릭 호스팅은 계속 동적 검사 유지)
+  - 단순 검색 `<form>`이나 같은 도메인 내 리다이렉트는 에스컬레이션 조건에서 제외, 정적 HTML 검사 타임아웃 1.8초 / 최대 150KB로 제한
+  - `tldextract`가 첫 실행 때 파일 락 걸고 외부 리스트 받으려다 멈추는 문제 때문에 `suffix_list_urls=(), cache_dir=None` 옵션 적용
+  - `rag_service.py`: `collection.query()`를 `asyncio.to_thread()`로 빼서 이벤트 루프 막히던 현상 해결, 거리값 `0.55` 초과 문서는 제외
+  - `gemini_service.py`, `analyzer.py`: 메일 판정이랑 본문 요약을 스키마 하나로 합쳐서 일반 메일은 LLM 1번만 호출하도록 변경
+  - `http_client.py` 추가해서 `httpx.AsyncClient` 공유 사용, `gmail_client.py`에서 매번 `raw_email_sample.json` 저장하던 디버그 코드 제거
+  - DOM에서 발신자/제목/본문/링크를 바로 뽑아서 보내는 경로 추가하고, `/api/analyze-email/stream`으로 1차 결과 먼저 띄우도록 수정
+  - 받은편지함 목록에서 메일 0.9초 이상 호버 시 백그라운드로 미리 캐싱하는 프리페치 추가 (무료 한도 고려해서 세션당 8건 제한)
+
+### 모델 업데이트 및 정리
+- 지원 종료된 `gemma-3-27b` 대신 `gemma-4-31b-it`로 교체
+- 무료 티어 한도 맞춰서 `gemini-3.5-flash-lite` -> `gemini-3.1-flash-lite` -> `gemma-4-31b-it` 순으로 3단 Fallback 구성
+- 모델명 하드코딩 빼고 `backend/app/core/config.py` 및 `.env`에서 관리하도록 정리
+- `local_ai.js`에서 Chrome Prompt API 출력 언어 경고 뜨던 부분(`expectedOutputs: [{ type: "text", languages: ["en"] }]`) 수정
+
+---
+
+## [2026-09-08] Side Panel 대시보드, 위험 링크 자동 차단(DNR), 온디바이스 AI 연동
+
+### 익스텐션 기능 확장
+- **Chrome Side Panel 대시보드 추가** (`extension/sidepanel/`)
+  - 좁은 툴팁/배너에 다 못 넣던 상세 정보(안전도 점수, RDAP, VirusTotal, Playwright 탐지 플래그, RAG 참고 사례)를 우측 사이드 패널에 모아서 볼 수 있게 구성
+  - 팝업과 Gmail 배너 상단에 사이드 패널 바로 열기 버튼 추가
+- **DeclarativeNetRequest(DNR) 위험 URL 자동 차단 추가** (`extension/blocked/`, `background.js`)
+  - 호버 검사에서 30점 이하로 나온 위험 링크는 세션 차단 규칙에 자동 등록
+  - 실수로 클릭하면 `/blocked/blocked.html` 경고 화면으로 넘어가고, 필요하면 거기서 차단 해제 후 이동 가능
+  - 사이드 패널과 팝업에서 차단 목록 확인 및 ON/OFF 토글 추가
+- **Chrome Built-in AI (`local_ai.js`) 실험 연동**
+  - 지원하는 크롬 브라우저에서는 드래그 텍스트를 온디바이스 `LanguageModel`로 먼저 가볍게 걸러보고, 의심될 때만 서버 RAG/Gemini 호출하도록 하이브리드 구성
+  - 백엔드 요약이 비었을 때 `Summarizer` API로 보조 요약 지원 (미지원 환경에서는 기존처럼 백엔드 그대로 사용)
+
+### 백엔드 분석 정확도 보완
+- `browser_analyzer.py`, `analyzer.py`, `routes.py`: 의심 페이지 접속 시 뷰포트 PNG 스크린샷 캡처 기능 추가, Gemini 호출 시 이미지 파트 함께 전달해서 로고/로그인 화면 위장 사이트도 같이 판단하도록 수정
+- `gemini_service.py`, `routes.py`: 문자열 치환으로 JSON 파싱하던 부분 걷어내고 Pydantic `response_schema` 기반 Structured Outputs 적용
+
+---
+
+## [2026-08-17] Playwright 브라우저 풀링 및 UI Shadow DOM 분리
+
+### 백엔드
+- `browser_analyzer.py`: 요청 올 때마다 Chromium을 새로 켰다 끄니까 너무 느려서, 전용 스레드(`WindowsProactorEventLoopPolicy`)에 브라우저 1개만 띄워두고 `new_context()`만 격리해서 재사용하는 `BrowserPoolManager`로 변경
+- 구버전 Headless 대신 `channel="chromium"`(New Headless) 우선 시도하고 실패 시 기본 `chromium-headless-shell`로 내려가도록 처리, 고정되어 있던 `Chrome/120` User-Agent를 브라우저 실제 버전 기준으로 변경
+- `main.py` 종료(`lifespan`) 시 Playwright 브라우저 풀 정리 추가
+
+### 익스텐션
+- `url_ui.js`, `gmail_banner.js`: 호버 툴팁과 Gmail 배너를 `attachShadow({ mode: "closed" })` 안으로 옮겨서 사이트 CSS랑 겹치거나 깨지는 문제 해결
+- `innerHTML`에 서버 문자열 그대로 들어가던 부분 `textContent` / `escapeHtml`로 정리
+- `gmail_ui.js`: `document.body` 전체에 무제한으로 돌던 `MutationObserver` 부하 줄이기 위해 `window.navigation` / `hashchange` + 디바운스 방식으로 변경
+
+---
+
+## [2026-07-19] 크롬 업데이트 대응 (LNA/CORS) 및 SDK 정리
+
+- 크롬 최신 버전에서 Content Script가 `localhost`로 직접 `fetch()` 날릴 때 막히는(Local Network Access / CORS) 문제 해결
+  - `url_ui.js`의 직접 `fetch()` 제거하고 `background.js`에 `chrome.runtime.connect("phishing-stream")` 포트 열어서 NDJSON 스트리밍 중계하도록 변경
+  - 링크에서 마우스 떼면(`mouseout`) 포트 닫고 `AbortController`로 백엔드 요청 취소되게 처리
+  - `popup.js`의 DB 초기화·로그 조회도 `background.js` 경유로 통일
+- `requirements.txt`에서 안 쓰는 구버전 `google-generativeai` 제거하고 `google-genai` 하나로 정리 (`gemini_client.py`는 호환용 래퍼로 변경)
+
+---
+
+## [2026-06-12] 0612 추가사항 - Gemini GA 모델 업데이트, 익스텐션 원격 IP 동적 설정 & 배치 파일 최적화 & 로컬 서버 다운로드 가이드 탑재
 
 ### 1. 크롬 익스텐션 (Chrome Extension)
 *   **설정 페이지 내 로컬 서버 다운로드 및 실행 가이드 추가**
@@ -35,7 +104,7 @@
 
 ---
 
-## 📅 [2026-06-10] 0610 추가사항 - 서버 모드 설정 토글 & Windows 배포 구성
+## [2026-06-10] 0610 추가사항 - 서버 모드 설정 토글 & Windows 배포 구성
 
 ### 1. 크롬 익스텐션 (Chrome Extension)
 *   **서버 모드 옵션 설정 페이지 추가**

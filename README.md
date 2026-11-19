@@ -1,190 +1,153 @@
-# 🛡️ 시켜줘, 너의 웹보안관 : 보안 지식이 없는 사용자를 위한 직관적 웹 위협 인디케이터 시스템
+# 웹보안관 (WebSecurityGuard) v2.0
 
-> **LLM + RAG 기반 올인원 피싱 탐지 Chrome Extension**  
-> 일반 웹페이지 URL/텍스트 분석부터 Gmail 이메일 심층 분석까지 하나의 통합 시스템으로 처리합니다.
+LLM, RAG, 가상 브라우저(Playwright)를 결합한 피싱 탐지 Chrome 확장프로그램입니다.  
+일반 웹페이지 링크 호버 검사, 의심 문구 드래그 검사, 위험 사이트 자동 차단, Gmail 메일 분석을 하나의 FastAPI 백엔드와 Chrome Extension(MV3)으로 처리합니다.
 
-과거 분리되어 있던 `MailReader`(Gmail 심층 분석)와 `Zp`(제로샷 실시간 웹 검사기)를 단일 FastAPI 백엔드 + Chrome Extension으로 통합한 프로젝트입니다.
+> 현재 브랜치(`feat/chrome-modernization`)는 기존 v1.0에서 크롬 최신 정책(LNA/CORS), Side Panel, DNR 자동 차단, Playwright 풀링, 최신 Gemini 모델 및 속도 개선 작업을 반영한 버전입니다.
 
----
-https://youtu.be/SfNGCjKW3M0
-
-https://youtu.be/S8i36zZRL7k 
-
-## 🌟 주요 기능 (Key Features)
-
-### 1. 일반 웹페이지 실시간 보안 (Zero-shot Detector)
-
-| 기능 | 설명 |
-|------|------|
-| **URL 호버 검사** | 링크에 0.5초 이상 마우스를 올리면 즉시 작동 — 타이포스쿼팅 탐지, VirusTotal 악성 여부, RDAP 도메인 생성일을 병렬 조회 후 LLM이 최종 안전도(0~100점)를 툴팁으로 표시 |
-| **텍스트 드래그 검사** | 의심 문구를 드래그하면 ChromaDB 벡터 DB에서 유사 피싱 판례를 검색(RAG)하고 Gemini가 사회공학적 사기 여부를 판정 |
-| **2-Tier 정밀 분석** | ① 정적 HTML 검사 → ② Playwright 브라우저로 투명 폼(Hidden Form), 리다이렉션 등 동적 악성 행위 렌더링 추적 |
-
-### 2. Gmail 심층 분석 (Deep Email Analysis)
-
-- **안전한 DOM 정제** — 숨김 텍스트·악성 스크립트를 제거하여 LLM 교란 방지
-- **RAG 판례 검색** — ChromaDB에 적재된 피싱/스팸 데이터셋을 벡터 검색, LLM 프롬프트에 컨텍스트로 주입
-- **2단계 링크 검사** (Tier 1 VirusTotal+정적 / Tier 2 Playwright 동적)
-- **비침해적 UI 배너** — 위험 수준(안전/주의/위험)에 따른 시각적 배너 + 메일 요약 렌더링
-
-### 3. RAG Done Criteria (시연용 검증 지표)
-
-> **"그냥 LLM만 돌린 건지, RAG를 거친 건지"를 결과 화면에서 바로 확인할 수 있습니다.**
-
-Gmail 분석 결과 배너에 다음 정보가 표시됩니다:
-
-| 상태 | 뱃지 | 의미 |
-|------|------|------|
-| RAG 사용됨 | 🧠 **RAG: N개 판례 참조됨** (파란 뱃지) | Vector DB에서 유사 판례를 검색해 LLM 프롬프트에 주입 |
-| RAG 미사용 | 🤖 **LLM 단독 판정** (회색 뱃지) | Vector DB 미연결 또는 유사 판례 없음 |
-
-**`🔍 RAG 참조 판례`** 섹션을 펼치면 각 판례의 라벨(피싱/정상), 출처, 유사도(%)와 실제 텍스트 스니펫이 표시됩니다.
-
-API 응답 JSON에도 포함됩니다:
-```json
-{
-  "rag_used": true,
-  "rag_doc_count": 3,
-  "rag_retrieved_docs": [
-    { "document": "...", "label": "2", "source": "phishing_dataset", "distance": 0.0821 }
-  ]
-}
-```
-
-### 4. 통합 로그 대시보드 (Popup) & 전문가용 Raw DB
-
-- **일반 대시보드:** 이메일/URL/텍스트 분석 이력(최근 20건)을 한눈에 조회 가능합니다.
-- **전문가용 원본 DB (`raw_data`):** 동적 분석(Playwright DOM 이벤트, 히든 폼 탐지) 및 정적 검사 결과의 원본 JSON 페이로드가 백엔드 SQLite DB에 영구 저장됩니다. (VS Code SQLite Viewer 등으로 분석 가능)
-- **DB 안전 초기화:** 확장 프로그램 팝업에서 DB 캐시를 비우더라도, 일반 로그(SQLite)만 삭제되며 **RAG 판례 학습 데이터(ChromaDB)는 절대 초기화되지 않고 안전하게 보존**됩니다.
+시연 영상 (v1.0 기준):
+- https://youtu.be/SfNGCjKW3M0
+- https://youtu.be/S8i36zZRL7k
 
 ---
 
-## 🏗 아키텍처 (Architecture)
+## 주요 기능
+
+### 1. 일반 웹페이지 실시간 검사
+- **링크 호버 분석**: 링크 위에 마우스를 0.5초 올리면 타이포스쿼팅(Levenshtein), VirusTotal, RDAP 도메인 생성일을 조회한 뒤 안전도 점수(0~100)를 Shadow DOM 툴팁으로 띄웁니다.
+- **텍스트 드래그 분석**: 의심 문구(10~500자)를 드래그하면 ChromaDB의 과거 피싱/스팸 사례(RAG)를 검색해 Gemini가 사기 여부를 판별합니다. 지원하는 크롬에서는 내장 Gemini Nano(`LanguageModel`)로 1차 스크리닝을 먼저 거친 뒤 필요할 때만 서버로 넘깁니다.
+- **2-Tier 동적·화면 정밀 분석**: 정밀 분석 모드를 켜거나 퍼블릭 호스팅(`github.io`, `vercel.app` 등) 링크일 경우, 정적 HTML 검사 후 풀링된 Playwright(New Headless)로 숨겨진 폼·리다이렉트를 추적하고 뷰포트 스크린샷을 찍어 Gemini Vision으로 브랜드 사칭 여부까지 확인합니다.
+- **위험 링크 자동 차단 (DNR)**: 30점 이하 위험 URL은 `declarativeNetRequest` 세션 규칙에 자동 등록되어, 실수로 클릭하면 경고 페이지(`blocked/blocked.html`)로 이동합니다.
+
+### 2. Gmail 메일 분석
+- **DOM Fast Path + 2단계 스트리밍**: 열람 중인 메일의 발신자·제목·본문·링크를 DOM에서 바로 읽어 분석을 시작하며(본문이 없을 때만 Gmail API 사용), `/api/analyze-email/stream`으로 진행 상태와 1차 판정 배너를 먼저 띄운 뒤 의심 링크가 있을 때만 Playwright 결과를 이어서 반영합니다.
+- **판정 + 요약 1회 통합 호출**: 보안 판정과 메일 본문 3~4줄 요약을 단일 Gemini Structured Output 호출로 같이 받아 응답 시간을 줄였습니다.
+- **받은편지함 호버 프리페치**: 메일 목록에서 행 위에 0.9초 이상 마우스를 올리면 백그라운드로 미리 캐싱해 두고 클릭 시 바로 표시합니다.
+- **RAG 참조 판례 표시**: 유사도가 기준치 이내인 과거 피싱 사례를 참고한 경우 배너에 참조 개수와 출처/유사도/스니펫을 함께 보여줍니다.
+
+### 3. Side Panel 상세 대시보드
+- 팝업이나 Gmail 배너의 **상세 대시보드** 버튼을 누르면 우측 크롬 사이드 패널이 열립니다.
+- 최근 분석 항목의 안전도 게이지, 판정 근거, 권장 조치, RDAP/VT/Playwright 탐지 내역, RAG 참고 사례, 그리고 현재 세션에서 자동 차단된 URL 목록(개별/전체 해제 가능)을 확인할 수 있습니다.
+
+---
+
+## 프로젝트 구조
 
 ```text
 c:\Dev\Plus\
-├── extension/                     # Chrome Extension (프론트엔드)
-│   ├── manifest.json              # 통합 권한 및 OAuth 설정
-│   ├── background/                # OAuth 토큰 발급 및 백엔드 통신 중계
-│   └── content/
-│       ├── content.js             # 진입점
-│       ├── gmail_ui.js            # Gmail MutationObserver & 메시지 ID 추출
-│       ├── gmail_banner.js        # 분석 결과 배너 렌더링 (RAG 뱃지 포함)
-│       ├── url_ui.js              # URL 호버 / 텍스트 드래그 UI
-│       └── banner.css             # 배너 스타일
+├── extension/
+│   ├── manifest.json             # MV3 권한 (sidePanel, declarativeNetRequest 등) & OAuth 설정
+│   ├── background/
+│   │   └── background.js         # Service Worker (Port 스트리밍 프록시, DNR 차단, Side Panel 동기화)
+│   ├── content/
+│   │   ├── content.js            # Gmail / 일반 웹 분기
+│   │   ├── api.js                # 로컬/원격 서버 BaseURL 관리
+│   │   ├── local_ai.js           # Chrome Built-in AI (LanguageModel / Summarizer) 연동
+│   │   ├── url_ui.js             # Shadow DOM 툴팁, 호버/드래그 스트리밍
+│   │   ├── gmail_ui.js           # Navigation API 감지, DOM 추출, 스트리밍, 호버 프리페치
+│   │   └── gmail_banner.js       # Shadow DOM 배너 렌더링 및 레이아웃 복구
+│   ├── sidepanel/                # 사이드 패널 대시보드 (HTML/CSS/JS)
+│   ├── blocked/                  # DNR 위험 사이트 차단 경고 페이지 (HTML/JS)
+│   ├── popup/                    # 설정 토글 및 최근 분석 기록
+│   └── options/                  # 로컬/원격 서버 전환 및 IP 입력
 │
-└── backend/                       # FastAPI 백엔드
-    ├── requirements.txt
-    ├── .env.example               # 환경변수 템플릿 (API 키 미포함)
-    └── app/
-        ├── main.py                # 서버 진입점 & DB/벡터DB 초기화 (Lifespan)
-        ├── api/routes.py          # 모든 API 엔드포인트
-        ├── core/config.py         # Pydantic Settings (환경변수 관리)
-        └── services/
-            ├── analyzer.py        # 이메일 분석 파이프라인 오케스트레이션
-            ├── rag_service.py     # ChromaDB 벡터 검색 (query_rag_with_meta)
-            ├── gemini_service.py  # Gemini LLM 호출 (모델 Fallback 포함)
-            ├── virustotal_service.py
-            ├── link_sandbox.py    # 정적 URL 분석
-            ├── browser_analyzer.py # Playwright 동적 분석 (투명 폼, 리다이렉션 추적)
-            └── database.py        # SQLite 로깅 (raw_data 원본 로그, rag_doc_count 포함)
-├── test/                          # 로컬 검증용 피싱 시뮬레이터 HTML (정상, 타이포스쿼팅, 동적 우회, 사회공학)
+├── backend/
+│   ├── start_server.bat          # Windows 실행 스크립트 (로컬 / Localtunnel 선택)
+│   └── app/
+│       ├── main.py               # FastAPI 진입점 (DB/RAG 초기화, Playwright/HTTP 풀 종료)
+│       ├── api/routes.py         # API 라우터
+│       ├── core/config.py        # 환경변수 설정 (모델명, Playwright 옵션, DB 경로)
+│       ├── schemas/email.py      # 이메일 요청/응답 스키마
+│       └── services/
+│           ├── analyzer.py       # Gmail 2단계 스트리밍 분석 파이프라인
+│           ├── browser_analyzer.py # Playwright BrowserPoolManager (New Headless + 스크린샷)
+│           ├── gemini_service.py # google-genai 3단 Fallback + Structured Outputs
+│           ├── http_client.py    # 공유 httpx.AsyncClient
+│           ├── link_sandbox.py   # 신뢰 도메인 스킵, 에스컬레이션 조건, 정적 검사
+│           ├── rag_service.py    # ChromaDB 비동기 검색 (asyncio.to_thread)
+│           ├── virustotal_service.py
+│           ├── gmail_client.py
+│           ├── parser.py
+│           └── database.py       # SQLite 캐시 및 로그
+│
+├── test/                         # 시연용 테스트 HTML (0_launcher.html ~ 5_demo_scenario.html)
+├── .env.example
+├── requirements.txt
+└── CHANGELOG.md
 ```
 
 ---
 
-## 🚀 설치 및 실행 (Quick Start)
+## 설치 및 실행
 
-### 사전 요구사항
+### 사전 준비
+- Python 3.10 이상 (3.12 권장)
+- Google Chrome
+- Gemini API 키, VirusTotal API 키
 
-- Python **3.10** 이상
-- Google Chrome 브라우저
-- Gemini API 키 ([Google AI Studio](https://aistudio.google.com/))
-- VirusTotal API 키 ([VirusTotal](https://www.virustotal.com/))
-
----
-
-### Step 1. 백엔드 실행
-
-```bash
-# 1. 백엔드 폴더 이동
-cd backend
-
-# 2. 의존성 설치
+### 1. 백엔드 세팅
+```powershell
 pip install -r requirements.txt
-
-# 3. 환경변수 파일 생성 (.env.example 복사 후 값 채우기)
-copy .env.example .env
+playwright install chromium
+copy .env.example backend\.env
 ```
 
-`.env` 파일 내용:
+`backend/.env`에 키와 모델 설정을 입력합니다. (무료 티어 한도 기준 기본값)
 ```env
-GEMINI_API_KEY=여기에_Gemini_API_키_입력
-VIRUSTOTAL_API_KEY=여기에_VirusTotal_API_키_입력
+GEMINI_API_KEY=여기에_키_입력
+VIRUSTOTAL_API_KEY=여기에_키_입력
 DATABASE_URL=sqlite:///./security_logs.db
 RAG_DATASET_PATH=./data/merged_security_dataset.csv
 CHROMA_DB_PATH=./chroma_db
+
+GEMINI_PRIMARY_MODEL=gemini-3.5-flash-lite
+GEMINI_SECONDARY_MODEL=gemini-3.1-flash-lite
+GEMINI_FALLBACK_MODEL=gemma-4-31b-it
+GEMINI_SUMMARY_MODEL=gemma-4-31b-it
+
+PLAYWRIGHT_USE_NEW_HEADLESS=true
+PLAYWRIGHT_CAPTURE_SCREENSHOT=true
+PLAYWRIGHT_MAX_CONCURRENT_CONTEXTS=3
 ```
 
-```bash
-# 4. 서버 실행
-uvicorn app.main:app --reload
-# → http://localhost:8000 에서 대기
-```
+### 2. 서버 실행
+- `backend\start_server.bat` 더블클릭
+  - 로컬 테스트: Localtunnel 질문에 `n` (또는 Enter) -> `http://localhost:8000`
+  - 외부 원격 시연: `y` 입력 -> 백엔드 실행 후 `npx localtunnel --port 8000` 주소 발급
+- 터미널 직접 실행 시:
+  ```powershell
+  cd backend
+  uvicorn app.main:app --host 0.0.0.0 --port 8000
+  ```
 
-> **RAG 활성화 조건**: `RAG_DATASET_PATH`에 지정된 CSV 파일(`content`, `label`, `source` 컬럼 필요)이 존재해야 Vector DB가 초기화됩니다. 없으면 LLM 단독 모드로 동작합니다.
-
----
-
-### Step 2. Chrome Extension 설치
-
-> **참고:** 확장 프로그램 ID 불일치 문제를 해결하기 위해 `manifest.json` 내부에 RSA 공개키(`key`)가 하드코딩되어 있습니다. 따라서 팀원 간 로컬 환경이 달라도 동일한 Extension ID가 보장됩니다.
-
-1. `chrome://extensions/` 접속
-2. **개발자 모드** 켜기
-3. **'압축해제된 확장 프로그램 로드'** → `extension/` 폴더 선택
-4. 생성된 확장 프로그램 **ID(32자리)** 복사
+### 3. 크롬 확장프로그램 로드
+1. `chrome://extensions/` 열기 -> 우측 상단 **개발자 모드** 켜기
+2. **압축해제된 확장 프로그램 로드** -> `extension/` 폴더 선택
+3. 원격 서버에 붙일 때는 확장 아이콘 우클릭 -> **옵션**에서 원격 모드로 바꾸고 Localtunnel 주소나 같은 네트워크 IPv4 입력
 
 ---
 
-### Step 3. Google OAuth 설정 (Gmail 분석용)
-
-1. [Google Cloud Console](https://console.cloud.google.com/) → 새 프로젝트 생성
-2. **Gmail API** 사용 설정
-3. **OAuth 동의 화면** → 범위: `https://www.googleapis.com/auth/gmail.readonly` 추가 + 본인 계정 등록
-4. **사용자 인증 정보 → OAuth 클라이언트 ID** 생성 (유형: Chrome 앱, 확장 프로그램 ID 입력)
-5. 생성된 **클라이언트 ID** → `extension/manifest.json`의 `"oauth2" > "client_id"` 에 붙여넣기
-6. 확장 프로그램 페이지에서 **새로고침(↻)**
+## 테스트 방법
+- **서버 확인**: `http://localhost:8000/health` 접속 시 `{"status":"ok", ...}` 확인
+- **웹 시연 런처**: `https://molegit9.github.io/Proto/test/0_launcher.html` 접속 (또는 루트에서 `python -m http.server 3000` 실행 후 `http://localhost:3000/test/0_launcher.html`)
+- **Gmail 테스트**: `https://mail.google.com`에서 메일 열람 후 상단 배너 및 사이드 패널 확인
 
 ---
 
-## 🧪 동작 확인 (Testing)
+## API 목록
 
-| 시나리오 | 확인 방법 |
-|----------|-----------|
-| **서버 헬스 체크** | `http://localhost:8000/health` 접속 → `{"status":"ok"}` |
-| **Gmail 분석** | Gmail에서 임의의 메일 오픈 → 상단 배너에 판정 결과 + 🧠/🤖 RAG 뱃지 확인 |
-| **URL 호버** | 임의의 웹페이지에서 링크 위에 0.5초 이상 마우스 올리기 → 툴팁 보안 경고 |
-| **텍스트 드래그** | 의심 문구(10자 이상) 드래그 → RAG 판례 기반 위험도 팝업 |
-| **로그 대시보드** | 확장 아이콘 클릭 → **[기록]** 탭에서 최근 분석 이력 확인 |
-
----
-
-## 📋 API 엔드포인트
-
-| Method | Path | 설명 |
-|--------|------|------|
-| `POST` | `/api/analyze-email` | Gmail 이메일 전체 분석 (RAG 메타데이터 포함 응답) |
-| `POST` | `/api/v1/analyze` | URL 호버 분석 (NDJSON 스트리밍) |
-| `POST` | `/api/v1/analyze/text` | 드래그 텍스트 RAG 분석 (NDJSON 스트리밍) |
-| `GET`  | `/api/logs` | 최근 분석 로그 조회 |
-| `POST` | `/api/clear-db` | 분석 로그 DB 초기화 |
-| `GET`  | `/health` | 서버 상태 확인 |
+| Method | Path | 형식 | 설명 |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/analyze-email/stream` | NDJSON | Gmail 2단계 스트리밍 분석 (DOM Fast Path 지원) |
+| `POST` | `/api/analyze-email` | JSON | Gmail 단일 응답 분석 (프리페치/하위호환) |
+| `POST` | `/api/v1/analyze` | NDJSON | URL 호버 분석 |
+| `POST` | `/api/v1/analyze/text` | NDJSON | 드래그 텍스트 RAG 분석 |
+| `GET` | `/api/logs` | JSON | 최근 분석 로그 조회 |
+| `POST` | `/api/clear-db` | JSON | SQLite 캐시/로그 초기화 (ChromaDB 유지) |
+| `GET` | `/health` | JSON | 서버 상태 확인 |
 
 ---
 
-## 🔐 보안 주의사항
-
-- **`.env` 파일은 절대 공개 저장소에 업로드하지 마세요.** `.gitignore`에 이미 포함되어 있습니다.
-- API 키는 반드시 환경변수(`.env`)를 통해 주입하세요.
-- ChromaDB 벡터 DB(`chroma_db/`)와 학습 데이터셋(`.csv`)도 용량 및 라이선스 이유로 Git에서 제외됩니다.
+## 참고 / 주의사항
+- `backend/.env`, `chroma_db/`, 데이터셋 `.csv`는 `.gitignore` 대상입니다.
+- 현재 `extension/manifest.json`의 `"key"`는 기존 Google OAuth 클라이언트 ID(`llkiflkpnhnideaiaahogokcmcoffpjp`)와 호환되도록 유지 중입니다. 외부 배포 시에는 새 키쌍을 발급해 공개키만 넣고 OAuth 클라이언트를 다시 등록해야 합니다.

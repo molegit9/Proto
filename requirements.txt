@@ -1,7 +1,6 @@
 fastapi
 uvicorn
 google-genai
-google-generativeai
 playwright
 beautifulsoup4
 httpx

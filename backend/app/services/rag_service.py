@@ -1,4 +1,5 @@
 import os
+import asyncio
 import pandas as pd
 import chromadb
 from chromadb.utils import embedding_functions
@@ -148,23 +149,30 @@ async def query_rag(text: str, n_results: int = 3) -> list[str]:
     return [item["document"] for item in meta_result]
 
 
-async def query_rag_with_meta(text: str, n_results: int = 3) -> list[dict]:
+async def query_rag_with_meta(
+    text: str,
+    n_results: int = 3,
+    max_distance: float = 0.55,
+) -> list[dict]:
     """
     RAG 검색 결과를 메타데이터(label, source, distance)와 함께 반환.
-    시연용 Done Criteria: 어떤 판례를 참조했는지 눈에 보이게 제공.
-    반환 형식:
-        [{"document": str, "label": str, "source": str, "distance": float}, ...]
+    - asyncio.to_thread()로 동기 CPU 임베딩(ko-sroberta)을 스레드풀로 분리하여
+      FastAPI 이벤트 루프 블로킹을 원천 제거합니다.
+    - max_distance 임계값 미만인 유의미한 유사 판례만 반환합니다.
     """
     global collection
-    if collection is None:
+    if collection is None or not text or not text.strip():
         return []
 
-    try:
-        results = collection.query(
+    def _sync_query():
+        return collection.query(
             query_texts=[text],
             n_results=n_results,
             include=["documents", "metadatas", "distances"],
         )
+
+    try:
+        results = await asyncio.to_thread(_sync_query)
         if not (results and "documents" in results and results["documents"]):
             return []
 
@@ -175,12 +183,14 @@ async def query_rag_with_meta(text: str, n_results: int = 3) -> list[dict]:
         enriched = []
         for i, doc in enumerate(docs):
             meta = metas[i] if i < len(metas) else {}
-            dist = distances[i] if i < len(distances) else 1.0
+            dist = float(distances[i]) if i < len(distances) else 1.0
+            if max_distance is not None and dist > max_distance:
+                continue
             enriched.append({
                 "document": doc,
                 "label":    str(meta.get("label", "unknown")),
                 "source":   str(meta.get("source", "unknown")),
-                "distance": round(float(dist), 4),
+                "distance": round(dist, 4),
             })
         return enriched
     except Exception as e:

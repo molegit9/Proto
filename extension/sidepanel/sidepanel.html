@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>웹보안관 — 상세 위협 대시보드</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <header class="sp-header">
+    <div class="sp-brand">
+      <span class="sp-logo">🛡️</span>
+      <div>
+        <h1>웹보안관 대시보드</h1>
+        <p class="sp-subtitle">실시간 위협 상세 리포트</p>
+      </div>
+    </div>
+    <span id="ai-status-pill" class="pill pill-muted">AI 확인 중</span>
+  </header>
+
+  <nav class="sp-tabs">
+    <button class="sp-tab active" data-tab="panel-report">최근 분석 리포트</button>
+    <button class="sp-tab" data-tab="panel-blocked">자동 차단 (<span id="blocked-count">0</span>)</button>
+  </nav>
+
+  <main>
+    <!-- 탭 1: 최신 위협 분석 상세 -->
+    <section id="panel-report" class="sp-panel active">
+      <div id="empty-report" class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>아직 분석된 항목이 없습니다</h3>
+        <p>웹페이지 링크에 마우스를 올리거나 텍스트를 드래그하고, 또는 Gmail 메일을 열면 이곳에 상세 위협 리포트가 실시간으로 표시됩니다.</p>
+      </div>
+
+      <div id="report-content" class="hidden">
+        <div id="score-card" class="score-card">
+          <div class="score-top">
+            <span id="report-type-badge" class="type-badge">URL 분석</span>
+            <span id="report-time" class="report-time">-</span>
+          </div>
+          <div class="score-row">
+            <div class="score-value"><strong id="report-score">-</strong><span>/ 100</span></div>
+            <div id="report-verdict" class="verdict-pill">-</div>
+          </div>
+          <div class="score-bar-track">
+            <div id="score-bar-fill" class="score-bar-fill"></div>
+          </div>
+          <div id="report-target" class="report-target"></div>
+        </div>
+
+        <article class="card">
+          <h2>AI 판정 근거</h2>
+          <p id="report-reason" class="text-body"></p>
+          <div id="report-engine-tag" class="meta-note"></div>
+        </article>
+
+        <article id="card-actions" class="card hidden">
+          <h2>권장 조치</h2>
+          <ul id="report-actions-list" class="bullet-list"></ul>
+        </article>
+
+        <article id="card-soc-eng" class="card hidden">
+          <h2>감지된 사회공학 요소</h2>
+          <div id="soc-eng-tags" class="tag-list"></div>
+        </article>
+
+        <article id="card-technical" class="card hidden">
+          <h2>정밀 분석 (VirusTotal · RDAP · Playwright)</h2>
+          <div id="technical-details" class="kv-list"></div>
+        </article>
+
+        <article id="card-rag" class="card hidden">
+          <h2>과거 유사 위협 사례 (RAG)</h2>
+          <div id="rag-docs-list" class="rag-list"></div>
+        </article>
+
+        <article id="card-mail-summary" class="card hidden">
+          <h2>메일 본문 요약</h2>
+          <p id="report-mail-summary" class="text-body"></p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 탭 2: DNR 자동 차단 URL 관리 -->
+    <section id="panel-blocked" class="sp-panel">
+      <div class="blocked-toolbar">
+        <span class="toolbar-desc">DeclarativeNetRequest 세션 차단 규칙</span>
+        <button id="clear-blocked-btn" class="btn-outline-danger">전체 해제</button>
+      </div>
+      <div id="blocked-empty" class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h3>차단된 위험 URL이 없습니다</h3>
+        <p>위험 등급(30점 이하)으로 판정된 링크는 자동으로 여기에 등록되어 클릭 시 접속을 막아줍니다.</p>
+      </div>
+      <div id="blocked-list" class="blocked-list"></div>
+    </section>
+  </main>
+
+  <script src="../content/local_ai.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

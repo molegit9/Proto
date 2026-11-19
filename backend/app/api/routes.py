@@ -12,14 +12,19 @@ from google.genai import types
 
 # MailReader Imports
 from app.schemas.email import EmailAnalyzeRequest, EmailAnalyzeResponse
-from app.services.analyzer import analyze_email_pipeline
+from app.services.analyzer import analyze_email_pipeline, analyze_email_stream
 
 # Service Imports
 from app.services.database import get_db, log_analysis, get_cached_analysis, get_recent_logs
 from app.services.virustotal_service import check_url_virustotal
 from app.services import rag_service
 from app.services.link_sandbox import inspect_url_static
-from app.services.browser_analyzer import inspect_url_with_playwright
+from app.services.browser_analyzer import inspect_url_pooled
+from app.services.gemini_service import (
+    UrlAnalysisSchema,
+    TextAnalysisSchema,
+    generate_structured_with_fallback,
+)
 from app.core.config import settings
 
 router = APIRouter()
@@ -82,12 +87,39 @@ def get_genai_client():
 
 @router.post("/api/analyze-email", response_model=EmailAnalyzeResponse)
 async def analyze_email(request: EmailAnalyzeRequest):
-    """MailReader 단일 JSON 응답"""
+    """MailReader 단일 JSON 응답 (프리페치 및 하위 호환용)"""
     try:
-        result = await analyze_email_pipeline(request.message_id, request.access_token)
+        result = await analyze_email_pipeline(
+            message_id=request.message_id,
+            access_token=request.access_token,
+            dom_sender=request.sender,
+            dom_subject=request.subject,
+            dom_body_text=request.body_text,
+            dom_links=request.links,
+        )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/api/analyze-email/stream")
+async def analyze_email_streaming(request: EmailAnalyzeRequest):
+    """MailReader 2단계 NDJSON 스트리밍 응답 (1차 빠른 판정 즉시 표시 -> 필요 시 동적 분석 업데이트)"""
+    async def event_generator():
+        try:
+            async for event in analyze_email_stream(
+                message_id=request.message_id,
+                access_token=request.access_token,
+                dom_sender=request.sender,
+                dom_subject=request.subject,
+                dom_body_text=request.body_text,
+                dom_links=request.links,
+            ):
+                yield json.dumps(event, ensure_ascii=False) + "\n"
+        except Exception as e:
+            yield json.dumps({"stage": "error", "message": str(e)}, ensure_ascii=False) + "\n"
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
 @router.post("/api/v1/analyze")
 async def analyze_url(req: URLRequest):
@@ -154,7 +186,8 @@ async def analyze_url(req: URLRequest):
             
             # --- 2-Tier Deep Scan (Optional) ---
             deep_scan_info = ""
-            raw_data_dict = {}
+            screenshot_bytes = None
+            raw_data_dict = {"domain_age": domain_age}
             if vt_result: raw_data_dict["vt_findings"] = vt_result
 
             if req.enable_deep_scan or is_public_hosting:
@@ -168,26 +201,19 @@ async def analyze_url(req: URLRequest):
                     # 1단계 결과 요약 메시지
                     static_flags = []
                     if static_res.get("has_password_field"): static_flags.append("비밀번호 입력란 감지")
-                    if static_res.get("has_suspicious_form"): static_flags.append("의심 폼 감지")
+                    if static_res.get("has_login_form"): static_flags.append("의심 폼 감지")
                     if static_res.get("final_url") and static_res.get("final_url") != req.url: static_flags.append("리다이렉션 감지")
                     static_summary = f"정적 검사 완료 ({'⚠️ ' + ', '.join(static_flags) if static_flags else '이상 없음'})"
                     yield json.dumps({"progress": f"✅ {static_summary}"}) + "\n"
                     
-                    # 2단계: Playwright — Windows asyncio 호환을 위해 별도 스레드+이벤트 루프에서 실행
-                    yield json.dumps({"progress": "🕵️ 정밀 분석 2단계 — Playwright 가상 브라우저 실행 중... (수 초 소요)"}) + "\n"
+                    # 2단계: 풀링된 Playwright 가상 브라우저 실행 (New Headless + 멀티모달 스크린샷)
+                    yield json.dumps({"progress": "🕵️ 정밀 분석 2단계 — 가상 브라우저 동적·시각 검사 중..."}) + "\n"
                     
-                    def run_playwright_in_thread(url):
-                        import sys, asyncio
-                        if sys.platform == "win32":
-                            asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-                        async def _run():
-                            from playwright.async_api import async_playwright
-                            async with async_playwright() as p:
-                                return await inspect_url_with_playwright(p, url)
-                        return asyncio.run(_run())
-                    
-                    loop = asyncio.get_running_loop()
-                    dynamic_res = await loop.run_in_executor(None, run_playwright_in_thread, req.url)
+                    capture_ss = getattr(settings, "PLAYWRIGHT_CAPTURE_SCREENSHOT", True)
+                    dynamic_res = await inspect_url_pooled(req.url, capture_screenshot=capture_ss)
+                    if isinstance(dynamic_res, dict):
+                        dynamic_res = dict(dynamic_res)
+                        screenshot_bytes = dynamic_res.pop("_screenshot_bytes", None)
                     raw_data_dict["dynamic_findings"] = dynamic_res
                     dynamic_str = json.dumps(dynamic_res, ensure_ascii=False)
                     
@@ -196,6 +222,7 @@ async def analyze_url(req: URLRequest):
                     if dynamic_res.get("is_redirected"): dyn_flags.append("리다이렉션 감지")
                     if dynamic_res.get("has_password_field"): dyn_flags.append("비밀번호 폼 감지")
                     if dynamic_res.get("has_hidden_form"): dyn_flags.append("히든 폼 감지")
+                    if dynamic_res.get("screenshot_captured"): dyn_flags.append("화면 캡처 완료")
                     dyn_summary = f"동적 검사 완료 ({'⚠️ ' + ', '.join(dyn_flags) if dyn_flags else '이상 없음'})"
                     yield json.dumps({"progress": f"✅ {dyn_summary}"}) + "\n"
                     
@@ -211,6 +238,10 @@ async def analyze_url(req: URLRequest):
             
             target_str = req.target_brand if req.target_brand else "없음"
             is_https = "사용 중 (안전함)" if str(req.url).startswith("https://") else "미사용 - HTTP 기반의 암호화되지 않은 취약한 연결 (개인정보 탈취 위험 높음!)"
+            vision_instruction = (
+                "\n[시각적 분석 지침] 첨부된 스크린샷은 대상 URL의 실제 화면입니다. 유명 브랜드 로고 사칭, 가짜 로그인 페이지, 시각적 위장 여부를 함께 판단하세요."
+                if screenshot_bytes else ""
+            )
             
             prompt = f"""
             당신은 보안 취약계층(어르신, 학생 등)을 돕는 친절한 화이트해커 전문가입니다.
@@ -223,38 +254,40 @@ async def analyze_url(req: URLRequest):
             - Levenshtein 타이포스쿼팅 탐지: {req.is_spoofed} (사칭 타겟: {target_str})
             - 도메인 나이(RDAP): {domain_age}
             - VirusTotal 보안 DB 감지 여부: {vt_info}
-            {deep_scan_info}
+            {deep_scan_info}{vision_instruction}
             
             위 메타데이터와 시스템 컨텍스트를 파악하여, 이 사이트의 안전도 점수(0~100)를 평가하세요.
             100점은 '공식 사이트이며 완전히 안전함'을 뜻하고, 0점은 '심각한 사기/피싱 환경'을 의미합니다.
             만약 [정밀 분석] 결과에서 리다이렉션 변조, 악성 폼 렌더링, 특히 '히든 폼(has_hidden_form: true)'이 감지되었다면 사용자를 속이려는 악의적인 목적(투명 폼 등)이 매우 강하므로 점수를 0점 가까이 크게 낮추고, 이유에 투명/히든 폼의 위험성을 반드시 명시하세요.
-            
-            응답은 반드시 아래 JSON 형식으로만 반환하세요:
-            {{"safety_score": 90, "reason": "이곳은 아이폰 공식 홈페이지입니다. 안심하고 쓰셔도 좋습니다."}}
             """
             
             client = get_genai_client()
             if client is None:
                 yield json.dumps({"status": "error", "message": "Gemini API 키가 설정되지 않았습니다."}) + "\n"
                 return
-                
-            response = await client.aio.models.generate_content(
-                model='gemini-3.1-flash-lite',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                )
-            )
             
+            contents = [prompt]
+            if screenshot_bytes:
+                contents.append(types.Part.from_bytes(data=screenshot_bytes, mime_type="image/png"))
+                
+            parsed_url_res = await generate_structured_with_fallback(
+                client=client,
+                contents=contents,
+                schema=UrlAnalysisSchema,
+                fallback_json_hint='{"safety_score": 0-100, "reason": "쉬운 한국어 1~2문장 설명"}',
+            )
+            res_data = parsed_url_res.model_dump()
+            res_data["url"] = req.url
+            res_data["details"] = raw_data_dict
+
             try:
-                res_data = json.loads(response.text)
                 log_score = str(res_data.get("safety_score", 50))
                 log_reason = res_data.get("reason", "")
                 log_analysis("hover", req.url, log_score, log_reason, raw_data=json.dumps(raw_data_dict, ensure_ascii=False))
             except Exception as db_e:
                 print("DB 로그 저장 에러:", db_e)
                 
-            yield json.dumps({"status": "success", "data": response.text}) + "\n"
+            yield json.dumps({"status": "success", "data": json.dumps(res_data, ensure_ascii=False)}) + "\n"
         except Exception as e:
             yield json.dumps({"status": "error", "message": str(e)}) + "\n"
             
@@ -287,7 +320,7 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
                         elif top_label in ["4", "5"]: label_name = "악성 스팸 판례"
                         else: label_name = f"라벨 {top_label}"
                         
-                        highest_sim_info = f"<br><br>💡 참고:  기존에 축적된 과거 신고 사례 중 가장 유사한 내용은 [{label_name}] (유사도 {sim_pct}%) 입니다."
+                        highest_sim_info = f"\n\n💡 참고: 기존에 축적된 과거 신고 사례 중 가장 유사한 내용은 [{label_name}] (유사도 {sim_pct}%) 입니다."
 
                     if len(distances) > 0 and distances[0] < 0.15:
                         best_label = str(metas[0].get("label", "0"))
@@ -345,22 +378,20 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
                 yield json.dumps({"risk_level": "에러", "score": 50, "reason": "Gemini API 키가 설정되지 않았습니다.", "mitigation": "-"}) + "\n"
                 return
 
-            response = await client.aio.models.generate_content(
-                model='gemini-3.1-flash-lite',
-                contents=rag_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
+            try:
+                parsed_text_res = await generate_structured_with_fallback(
+                    client=client,
+                    contents=rag_prompt,
+                    schema=TextAnalysisSchema,
+                    fallback_json_hint='{"risk_level": "안전"|"주의"|"위험", "score": 0-100, "reason": str, "mitigation": str}',
                     safety_settings=[
                         types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=types.HarmBlockThreshold.BLOCK_NONE),
                         types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
                         types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
                         types.SafetySetting(category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE),
-                    ]
+                    ],
                 )
-            )
-            
-            try:
-                res_data = json.loads(response.text)
+                res_data = parsed_text_res.model_dump()
                 try:
                     # RAG 최고 유사도 정보가 있으면 AI의 reason에 덧붙이기
                     if highest_sim_info:
@@ -378,8 +409,8 @@ async def analyze_rag_text(req: TextAnalyzeRequest):
                     log_analysis("drag", req.selected_text, str(100 - score), res_data.get("reason", ""), raw_str)
                 except Exception as e:
                     print("Drag DB Log Error:", e)
-                yield json.dumps(res_data) + "\n"
-            except json.JSONDecodeError:
+                yield json.dumps(res_data, ensure_ascii=False) + "\n"
+            except Exception:
                 yield json.dumps({"risk_level": "에러", "score": 0, "reason": "AI 파싱 오류", "mitigation": "-"}) + "\n"
                 
         except Exception as e:

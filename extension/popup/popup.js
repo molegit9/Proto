@@ -33,22 +33,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 2. Settings (Toggle)
+    // 2. Settings (Toggle & Side Panel)
     const toggle = document.getElementById('progressToggle');
     const deepScanToggle = document.getElementById('deepScanToggle');
+    const localAiToggle = document.getElementById('localAiToggle');
+    const autoBlockToggle = document.getElementById('autoBlockToggle');
+    const openSidePanelBtn = document.getElementById('openSidePanelBtn');
+
+    if (openSidePanelBtn) {
+        openSidePanelBtn.addEventListener('click', async () => {
+            try {
+                const win = await chrome.windows.getCurrent();
+                if (chrome.sidePanel && win && win.id) {
+                    await chrome.sidePanel.open({ windowId: win.id });
+                    window.close();
+                } else {
+                    chrome.runtime.sendMessage({ action: "OPEN_SIDE_PANEL", windowId: win && win.id });
+                }
+            } catch (err) {
+                console.error('Failed to open side panel:', err);
+            }
+        });
+    }
     
     if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.local.get(['showProgress', 'enableDeepScan'], function(result) {
-            if (result.showProgress !== undefined) {
-                toggle.checked = result.showProgress;
-            } else {
-                toggle.checked = true; // default
+        chrome.storage.local.get(['showProgress', 'enableDeepScan', 'enableLocalAi', 'enableAutoBlock'], function(result) {
+            toggle.checked = result.showProgress !== undefined ? result.showProgress : true;
+            deepScanToggle.checked = result.enableDeepScan !== undefined ? result.enableDeepScan : false;
+            if (localAiToggle) {
+                localAiToggle.checked = result.enableLocalAi !== undefined ? result.enableLocalAi : true;
             }
-            
-            if (result.enableDeepScan !== undefined) {
-                deepScanToggle.checked = result.enableDeepScan;
-            } else {
-                deepScanToggle.checked = false; // default
+            if (autoBlockToggle) {
+                autoBlockToggle.checked = result.enableAutoBlock !== undefined ? result.enableAutoBlock : true;
             }
         });
         
@@ -59,6 +75,18 @@ document.addEventListener('DOMContentLoaded', () => {
         deepScanToggle.addEventListener('change', (e) => {
             chrome.storage.local.set({ enableDeepScan: e.target.checked });
         });
+
+        if (localAiToggle) {
+            localAiToggle.addEventListener('change', (e) => {
+                chrome.storage.local.set({ enableLocalAi: e.target.checked });
+            });
+        }
+
+        if (autoBlockToggle) {
+            autoBlockToggle.addEventListener('change', (e) => {
+                chrome.storage.local.set({ enableAutoBlock: e.target.checked });
+            });
+        }
     }
 
     // 3. Settings (Clear DB) - Service Worker 경유
